@@ -54,7 +54,7 @@ contract Product{
     }
 
     // Function to report stolen
-    function reportStolen(string memory _code, address _customer) public payable returns (bool) {
+    function reportStolen(string memory _code, address _customer) public payable {
         uint i;
         // Checking if the customer exists
         if (customerArr[_customer].isValue) {
@@ -65,11 +65,10 @@ contract Product{
                         codeArr[_code].status = Status.Stolen;  // Changing the status to stolen
                     }
                 }
-                return true;
             }
         }
-        return false;
     }
+
 // Function for customer to purchase from retailer
 // Question: do we need to use _code of product as param? if no, what can we do ? 
     function purchase_by_token(string memory _code) public payable returns (bool) {
