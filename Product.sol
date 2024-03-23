@@ -5,7 +5,7 @@ contract Product{
 
     address owner;
 
-    enum Status {Active, Bought, Stolen}
+    enum Status {Active, Bought, Stolen, Counterfeit}
 
     PCToken productTokenContract;
     constructor(PCToken productTokenAddress) public {
@@ -62,6 +62,24 @@ contract Product{
             for (i = 0; i < customerArr[_customer].code.length; i++) {
                 if (compareString(customerArr[_customer].code[i], _code)) {
                     if (codeArr[_code].status == Status.Bought){
+                        codeArr[_code].status = Status.Counterfeit;  // Changing the status to counterfeit
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //report counterfeit
+    function reportCounterfeit(string memory _code, address _customer) public payable returns (bool) {
+        uint i;
+        // Checking if the customer exists
+        if (customerArr[_customer].isValue) {
+            // Checking if the customer owns the product
+            for (i = 0; i < customerArr[_customer].code.length; i++) {
+                if (compareString(customerArr[_customer].code[i], _code)) {
+                    if (codeArr[_code].status == Status.Bought){
                         codeArr[_code].status = Status.Stolen;  // Changing the status to stolen
                     }
                 }
@@ -70,6 +88,13 @@ contract Product{
         }
         return false;
     }
+
+    //verify product
+    function verifyProduct(string memory _code) public returns (bool) {
+        return (codeArr[_code].status != Status.Counterfeit);
+
+    }
+
 // Function for customer to purchase from retailer
 // Question: do we need to use _code of product as param? if no, what can we do ? 
     function purchase_by_token(string memory _code) public payable returns (bool) {
