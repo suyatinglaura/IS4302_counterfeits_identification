@@ -6,7 +6,7 @@ import "./Retailer.sol";
 
 // Product contract serves as a product pool, where it stores the product information, and operations related to products
 contract Product {
-    enum Status {Active, Bought, Stolen} // possible status of a product
+    enum Status {Manufactured, Wholesaled, Retailed, Sold, Stolen} // possible status of a product
     
     Manufacturer manufacturerContract;
     Wholesaler wholesalerContract;
@@ -96,6 +96,12 @@ contract Product {
         _;
     }
 
+    // check the product status
+    modifier validStatus(uint productId, Status expectedStatus) {
+        require(products[productId].status == expectedStatus, "You are not supposed to perform this operation at the current stage");
+        _;
+    }
+
     // function that adds new product (run by manufacturer)
     function addProduct() {
 
@@ -107,8 +113,9 @@ contract Product {
     }
 
     // function that add authorize retailer (run by wholesaler)
-    function addRetailer(uint256 productId, uint256 retailerId) public isWholesaler(msg.sender) validRetailer(retailerId) {
-        products[productId].retailerId = retailerId;
+    function addRetailer(uint256 productId, uint256 retailerId) public isWholesaler(msg.sender) validRetailer(retailerId) validStatus(productId, Status.Wholesaled) {
+        products[productId].retailerId = retailerId; // update retailer id
+        products[productId].status = Status.Retailed; // update product status
     }
     
 
@@ -128,7 +135,7 @@ contract Product {
             // Checking if the customer owns the product
             for (i = 0; i < customerArr[_customer].code.length; i++) {
                 if (compareString(customerArr[_customer].code[i], _code)) {
-                    if (codeArr[_code].status == Status.Bought){
+                    if (codeArr[_code].status == Status.Sold){
                         codeArr[_code].status = Status.Stolen;  // Changing the status to stolen
                     }
                 }
@@ -146,8 +153,8 @@ contract Product {
         require(status == Status.Active, "Product now available for sale.");
         // Deduct the token amount from the customer's account
         productTokenContract.transferCredit(address(this), codeArr[_code].price);
-        // Update the status of the purchased product to "Bought"
-        codeArr[_code].status = Status.Bought;
+        // Update the status of the purchased product to "Sold"
+        codeArr[_code].status = Status.Sold;
         return true;
     }
 
