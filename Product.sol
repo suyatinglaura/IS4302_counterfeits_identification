@@ -1,5 +1,8 @@
 pragma solidity ^0.5.0;
 import "./PCToken.sol";
+import "./Manufacturer.sol";
+import "./Wholesaler.sol";
+import "./Retailer.sol";
 
 contract Product{
 
@@ -43,7 +46,6 @@ contract Product{
 
     mapping (string => codeObj) codeArr; //What is the string here ? 
     
-    mapping (address => customerObj) customerArr;
 
     //to save gas & compare 2 strings
     function compareString(string memory str1, string memory str2) public pure returns (bool) {
@@ -54,7 +56,7 @@ contract Product{
     }
 
     // Function to report stolen
-    function reportStolen(string memory _code, address _customer) public payable returns (bool) {
+    function reportStolen(string memory _code, address _customer) public payable {
         uint i;
         // Checking if the customer exists
         if (customerArr[_customer].isValue) {
@@ -83,10 +85,8 @@ contract Product{
                         codeArr[_code].status = Status.Stolen;  // Changing the status to stolen
                     }
                 }
-                return true;
             }
         }
-        return false;
     }
 
     //verify product
@@ -105,8 +105,8 @@ contract Product{
         require(status == Status.Active, "Product now available for sale.");
         // Deduct the token amount from the customer's account
         productTokenContract.transferCredit(address(this), codeArr[_code].price);
-        // Update the status of the purchased product to "Bought"
-        codeArr[_code].status = Status.Bought;
+        // Update the status of the purchased product to "Sold"
+        codeArr[_code].status = Status.Sold;
         return true;
     }
 
