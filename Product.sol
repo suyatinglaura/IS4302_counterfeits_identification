@@ -6,7 +6,7 @@ import "./Retailer.sol";
 
 // Product contract serves as a product pool, where it stores the product information, and operations related to products
 contract Product {
-    enum Status {Active, Bought, Stolen} // possible status of a product
+    enum Status {Manufactured, Wholesaled, Retailed, Sold, Stolen} // possible status of a product
     
     Manufacturer manufacturerContract;
     Wholesaler wholesalerContract;
@@ -15,42 +15,67 @@ contract Product {
     address owner; // owner of the contract
     uint256 numProducts = 0; // keep track of number of products in the pool
 
-    address owner;
-
-    enum Status {Active, Bought, Stolen, Counterfeit}
-
-    PCToken productTokenContract;
-    constructor(PCToken productTokenAddress) public {
+    constructor(Manufacturer manufacturerAddress, Wholesaler wholesalerAddress, Retailer retailerAddress, PCToken productTokenAddress) public {
+        manufacturerContract = manufacturerAddress;
+        wholesalerContract = wholesalerAddress;
+        retailerContract = retailerAddress;
         productTokenContract = productTokenAddress;
+        owner = msg.sender;
     }
 
-    struct codeObj {
+    // struct codeObj {
+    //     Status status; // Default value will be Active
+    //     //uint status;
+    //     string brand;
+    //     string model;
+    //     string description;
+    //     string manufactuerName;
+    //     string manufactuerLocation;
+    //     string manufactuerTimestamp;
+    //     string retailer;
+    //     // I think can change to address which makes more sense
+    //     address[] customers;
+    //     // new
+    //     uint256 price; // in PCT amount
+    // }
+
+    // // A struct which helps create a new customer
+    // struct customerObj {
+    //     string name;
+    //     string phone;
+    //     string[] code;
+    //     bool isValue;
+    // }
+
+    // struct retailerObj {
+    //     string name;
+    //     string location;
+    // }
+
+    struct productObj {
         Status status; // Default value will be Active
-        //uint status;
-        string brand;
-        string model;
-        string description;
-        string manufactuerName;
-        string manufactuerLocation;
-        string manufactuerTimestamp;
-        string retailer;
-        // I think can change to address which makes more sense
-        address[] customers;
-        // new
-        uint256 price; // in PCT amount
+        uint256 manufacturerId;
+        uint256 wholesalerId;
+        uint256 retailerId;
+        address customer;
     }
 
-    // A struct which helps create a new customer
-    struct customerObj {
-        string name;
-        string phone;
-        string[] code;
-        bool isValue;
+    mapping (uint => productObj) products;
+    
+    // mapping (string => codeObj) codeArr; //What is the string here ? 
+    
+    // mapping (address => customerObj) customerArr;
+
+    // check msg.sender is a manufacturer
+    modifier isManufacturer(address manufacturer) {
+        require(manufacturerContract.manufacturerExists(manufacturer), "You are not a manufacturer");
+        _;
     }
 
-    struct retailerObj {
-        string name;
-        string location;
+    // check msg.sender is a wholesaler
+    modifier isWholesaler(address wholesaler) {
+        require(wholesalerContract.wholesalerExists(wholesaler), "You are not a wholesaler");
+        _;
     }
 
     // check msg.sender is a retailer
@@ -71,6 +96,12 @@ contract Product {
         _;
     }
 
+    // check the product status
+    modifier validStatus(uint productId, Status expectedStatus) {
+        require(products[productId].status == expectedStatus, "You are not supposed to perform this operation at the current stage");
+        _;
+    }
+
     // function that adds new product (run by manufacturer)
     function addProduct() {
 
@@ -82,8 +113,9 @@ contract Product {
     }
 
     // function that add authorize retailer (run by wholesaler)
-    function addRetailer(uint256 productId, uint256 retailerId) public isWholesaler(msg.sender) validRetailer(retailerId) {
-        products[productId].retailerId = retailerId;
+    function addRetailer(uint256 productId, uint256 retailerId) public isWholesaler(msg.sender) validRetailer(retailerId) validStatus(productId, Status.Wholesaled) {
+        products[productId].retailerId = retailerId; // update retailer id
+        products[productId].status = Status.Retailed; // update product status
     }
     
 
@@ -103,18 +135,12 @@ contract Product {
             // Checking if the customer owns the product
             for (i = 0; i < customerArr[_customer].code.length; i++) {
                 if (compareString(customerArr[_customer].code[i], _code)) {
-                    if (codeArr[_code].status == Status.Bought){
+                    if (codeArr[_code].status == Status.Sold){
                         codeArr[_code].status = Status.Stolen;  // Changing the status to stolen
                     }
                 }
             }
         }
-    }
-
-    //verify product
-    function verifyProduct(string memory _code) public returns (bool) {
-        return (codeArr[_code].status != Status.Counterfeit);
-
     }
 
 // Function for customer to purchase from retailer
@@ -127,8 +153,8 @@ contract Product {
         require(status == Status.Active, "Product now available for sale.");
         // Deduct the token amount from the customer's account
         productTokenContract.transferCredit(address(this), codeArr[_code].price);
-        // Update the status of the purchased product to "Bought"
-        codeArr[_code].status = Status.Bought;
+        // Update the status of the purchased product to "Sold"
+        codeArr[_code].status = Status.Sold;
         return true;
     }
 
