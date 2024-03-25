@@ -28,7 +28,7 @@ contract Product {
     //     //uint status;
     //     string brand;
     //     string model;
-    //     string description;
+    //     string description;  
     //     string manufactuerName;
     //     string manufactuerLocation;
     //     string manufactuerTimestamp;
@@ -84,6 +84,11 @@ contract Product {
         _;
     }
 
+    modifier validManufacturer(uint256 manufacturerId) {
+        require(manufacturerContract.checkManufacturer(manufacturerId) != address(0), "Please provide a valid manufacturer ID");
+        _;
+    }
+
     // check the provided wholesaler is valid
     modifier validWholesaler(uint wholesalerId) {
         require(wholesalerContract.checkWholesaler(wholesalerId) != address(0), "Please provide a valid wholesaler ID");
@@ -103,13 +108,20 @@ contract Product {
     }
 
     // function that adds new product (run by manufacturer)
-    function addProduct() {
+    function addProduct(uint256 _productId, uint256 _manufacturerId) public isManufacturer(msg.sender) validManufacturer(_manufacturerId)  {
+        // Create a new product object with default values
+        productObj memory newProduct;
+        newProduct.status = Status.Manufactured;
+        newProduct.manufacturerId = _manufacturerId;
 
+        // Add the product to the mapping
+        products[_productId] = newProduct;
     }
 
     // function that authorize wholesaler (run by manufacturer)
-    function addWholesaler() {
-
+    function addWholesaler(uint256 productId, uint256 wholesalerId) public isManufacturer(msg.sender) validWholesaler(wholesalerId) validStatus(productId, Status.Manufactured) {
+        products[productId].wholesalerId = wholesalerId;
+        products[productId].status = Status.Wholesaled;
     }
 
     // function that add authorize retailer (run by wholesaler)
