@@ -58,6 +58,7 @@ contract Product {
         uint256 wholesalerId;
         uint256 retailerId;
         address customer;
+        uint256 price; // in terms of # of PCTokens 
     }
 
     mapping (uint => productObj) products;
@@ -140,34 +141,31 @@ contract Product {
     }
 
     // Function to report stolen
-    function reportStolen(string memory _code, address _customer) public payable {
+    function reportStolen(uint id, address _customer) public payable {
         uint i;
-        // Checking if the customer exists
-        if (customerArr[_customer].isValue) {
-            // Checking if the customer owns the product
-            for (i = 0; i < customerArr[_customer].code.length; i++) {
-                if (compareString(customerArr[_customer].code[i], _code)) {
-                    if (codeArr[_code].status == Status.Sold){
-                        codeArr[_code].status = Status.Stolen;  // Changing the status to stolen
-                    }
-                }
-            }
+        Status status = products[id].status;
+        require(status != Status.Stolen, "Product has been reported as stolen already.");
+        require(status == Status.Sold, "Product hasn't been sold yet.");
+        // only allow customer himself / herself to report stolen
+        require(_customer == msg.sender, "Please ask the customer to report stolen by him/herself.");
+        if (products[id].customer == _customer){
+            products[id].status = Status.Stolen;
         }
     }
 
 // Function for customer to purchase from retailer
 // Question: do we need to use _code of product as param? if no, what can we do ? 
-    function purchase_by_token(string memory _code) public payable returns (bool) {
+    function purchase_by_token(uint id) public payable {
 
         uint256 amt = productTokenContract.checkCredit(msg.sender);
-        require(amt >= codeArr[_code].price, "You don't have enough PCT in your account.");
-        Status status = codeArr[_code].status;
-        require(status == Status.Active, "Product now available for sale.");
+        require(amt >= products[id].price, "You don't have enough PCT in your account.");
+        Status status = products[id].status;
+        require(status != Status.Stolen, "Product not available for sale.");
+        require(status != Status.Sold, "Product not available for sale.");
         // Deduct the token amount from the customer's account
-        productTokenContract.transferCredit(address(this), codeArr[_code].price);
+        productTokenContract.transferCredit(address(this), products[id].price);
         // Update the status of the purchased product to "Sold"
-        codeArr[_code].status = Status.Sold;
-        return true;
+        products[id].status = Status.Sold;
     }
 
 }
