@@ -130,6 +130,7 @@ contract Product {
 
     // function that add authorize retailer (run by wholesaler)
     function addRetailer(uint256 productId, uint256 retailerId) public isWholesaler(msg.sender) validRetailer(retailerId) validStatus(productId, Status.Wholesaled) {
+        require(wholesalerContract.checkWholesaler(products[productId].wholesalerId)==msg.sender, "You are not the wholesaler of this product");
         products[productId].retailerId = retailerId; // update retailer id
         products[productId].status = Status.Retailed; // update product status
     }
