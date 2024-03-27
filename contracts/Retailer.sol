@@ -38,6 +38,9 @@ contract Retailer {
     mapping (uint => customerObj) public customerArr;
 
     mapping(uint256 => retailerObj) public retailerArr; //retailerID to retailerObj
+    mapping (address => bool) retailerList; // keep track of the existence of each retailer
+    mapping (uint256 => address) retailers;
+
 
     uint256 public numRetailers = 0;
 
@@ -79,6 +82,16 @@ contract Retailer {
             }
             return false;
         }
+
+    // function that checks wholesaler existence
+    function retailerExists(address retailer) public view returns(bool) {
+        return retailerList[retailer];
+    }
+
+    // Checks retailer information
+    function checkRetailer(uint256 retailerId) public view returns(address) {
+        return retailers[retailerId];   
+    }
 
 
 

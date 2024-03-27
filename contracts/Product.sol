@@ -109,15 +109,17 @@ contract Product {
     }
 
     // function that adds new product (run by manufacturer)
-    function addProduct(uint256 _manufacturerId) public isManufacturer(msg.sender) validManufacturer(_manufacturerId)  {
+    function addProduct(uint256 _manufacturerId, uint256 price) public isManufacturer(msg.sender) validManufacturer(_manufacturerId)  {
         // Create a new product object with default values
         productObj memory newProduct;
         uint256 newProductId = numProducts++;
         newProduct.status = Status.Manufactured;
         newProduct.manufacturerId = _manufacturerId;
-
+        // add price
+        newProduct.price = price;
         // Add the product to the mapping
         products[newProductId] = newProduct;
+         
     }
 
     // function that authorize wholesaler (run by manufacturer)
