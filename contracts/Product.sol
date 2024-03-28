@@ -6,7 +6,7 @@ import "./Retailer.sol";
 
 // Product contract serves as a product pool, where it stores the product information, and operations related to products
 contract Product {
-    enum Status {Manufactured, Wholesaled, Retailed, Sold, Stolen} // possible status of a product
+    enum Status {Manufactured, Wholesaled, Retailed, Sold, Stolen, Counterfeit} // possible status of a product
     
     Manufacturer manufacturerContract;
     Wholesaler wholesalerContract;
@@ -108,6 +108,11 @@ contract Product {
         _;
     }
 
+    function checkProduct(uint256 productId) returns (productObj) {
+        return products[productId];
+        
+    }
+
     // function that adds new product (run by manufacturer)
     function addProduct(uint256 _manufacturerId, uint256 price) public isManufacturer(msg.sender) validManufacturer(_manufacturerId)  {
         // Create a new product object with default values
@@ -154,6 +159,16 @@ contract Product {
         require(_customer == msg.sender, "Please ask the customer to report stolen by him/herself.");
         if (products[id].customer == _customer){
             products[id].status = Status.Stolen;
+        }
+    }
+
+    function reportCounterfeit(uint id, address _customer) public payable {
+        uint i;
+        Status status = products[id].status;
+        require(status != Status.Counterfeit, "Product has been reported as counterfeit already.");
+        require(_customer == msg.sender, "Please ask the customer to report counterfeit by themselves.");
+        if (products[id].customer == _customer){
+            products[id].status = Status.Counterfeit;
         }
     }
 
