@@ -107,11 +107,23 @@ contract Product {
         require(products[productId].status == expectedStatus, "You are not supposed to perform this operation at the current stage");
         _;
     }
-
-    function checkProduct(uint256 productId) returns (productObj) {
-        return products[productId];
-        
+    
+    //checkOwner
+    modifier ownerOnly(uint256 productId) {
+        require(products[productId].customer == msg.sender);
+        _;
     }
+
+    //check valid id
+     modifier validProductId(uint256 productId) {
+        require(productId < numProducts);
+        _;
+    }
+
+    // function checkProduct(uint256 productId) returns (productObj) {
+    //     return products[productId];
+        
+    // }
 
     // function that adds new product (run by manufacturer)
     function addProduct(uint256 _manufacturerId, uint256 price) public isManufacturer(msg.sender) validManufacturer(_manufacturerId)  {
@@ -151,7 +163,7 @@ contract Product {
 
     // Function to report stolen
     function reportStolen(uint id, address _customer) public payable {
-        uint i;
+        // uint i;
         Status status = products[id].status;
         require(status != Status.Stolen, "Product has been reported as stolen already.");
         require(status == Status.Sold, "Product hasn't been sold yet.");
@@ -163,7 +175,7 @@ contract Product {
     }
 
     function reportCounterfeit(uint id, address _customer) public payable {
-        uint i;
+        // uint i;
         Status status = products[id].status;
         require(status != Status.Counterfeit, "Product has been reported as counterfeit already.");
         require(_customer == msg.sender, "Please ask the customer to report counterfeit by themselves.");
@@ -186,5 +198,22 @@ contract Product {
         // Update the status of the purchased product to "Sold"
         products[id].status = Status.Sold;
     }
+
+    function purchase_by_cash(uint productId) public {
+        //no need to do fund transfer
+        Status status = products[productId].status;
+        require(status != Status.Stolen, "Product not available for sale.");
+        require(status != Status.Sold, "Product not available for sale.");
+        products[productId].status = Status.Sold;
+        transfer(productId, msg.sender);
+
+    }
+
+    // function transfer ownership
+    function transfer(uint256 productId, address newOwner) public ownerOnly(productId) validProductId(productId) {
+        // products[productId].prevOwner = products[productId].owner;
+        products[productId].customer  = newOwner;
+    }
+
 
 }
