@@ -5,9 +5,9 @@ contract Retailer {
 
     PCToken public productTokenContract;
 
-    constructor(PCToken productTokenAddress) public {
-        productTokenContract = productTokenAddress;
-    }
+    // constructor(PCToken productTokenAddress) public {
+    //     productTokenContract = productTokenAddress;
+    // }
 
     struct codeObj {
         uint status;
