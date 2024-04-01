@@ -62,7 +62,9 @@ contract Product {
     }
 
     mapping (uint256 => productObj) products;
-    
+
+    event returnProduct(productObj);
+
     // mapping (string => codeObj) codeArr; //What is the string here ? 
     
     // mapping (address => customerObj) customerArr;
@@ -150,13 +152,16 @@ contract Product {
         newProduct.price = price;
         // add the product to the mapping
         products[newProductId] = newProduct;
+        emit returnProduct(newProduct);
         return newProductId;
     }
 
     // function that authorize wholesaler (run by manufacturer)
     function addWholesaler(uint256 productId, uint256 wholesalerId) public isManufacturer(msg.sender) validWholesaler(wholesalerId) validStatus(productId, Status.Manufactured) {
+        require(manufacturerContract.checkManufacturer(products[productId].manufacturerId)==msg.sender, "You are not the manufacturer of this product");
         products[productId].wholesalerId = wholesalerId;
         products[productId].status = Status.Wholesaled;
+        emit returnProduct(products[productId]);
     }
 
     // function that add authorize retailer (run by wholesaler)
