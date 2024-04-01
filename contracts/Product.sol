@@ -1,4 +1,5 @@
 pragma solidity ^0.5.0;
+pragma experimental ABIEncoderV2; // add to enable struct returning
 import "./PCToken.sol";
 import "./Manufacturer.sol";
 import "./Wholesaler.sol";
@@ -51,9 +52,8 @@ contract Product {
     //     string name;
     //     string location;
     // }
-
     struct productObj {
-        Status status; // Default value will be Active
+        Status status; // default value will be Manufactured
         uint256 manufacturerId;
         uint256 wholesalerId;
         uint256 retailerId;
@@ -61,7 +61,7 @@ contract Product {
         uint256 price; // in terms of # of PCTokens 
     }
 
-    mapping (uint => productObj) products;
+    mapping (uint256 => productObj) products;
     
     // mapping (string => codeObj) codeArr; //What is the string here ? 
     
@@ -85,8 +85,9 @@ contract Product {
         _;
     }
 
-    modifier validManufacturer(uint256 manufacturerId) {
-        require(manufacturerContract.checkManufacturer(manufacturerId) != address(0), "Please provide a valid manufacturer ID");
+    // check the id and address of the provided manufacturer match
+    modifier validManufacturer(uint256 manufacturerId, address manufacturer) {
+        require(manufacturerContract.checkManufacturer(manufacturerId) == manufacturer, "Please provide a valid manufacturer ID");
         _;
     }
 
@@ -108,25 +109,38 @@ contract Product {
         _;
     }
     
-    //checkOwner
+    // checkOwner
     modifier ownerOnly(uint256 productId) {
         require(products[productId].customer == msg.sender);
         _;
     }
 
-    //check valid id
+    // check valid id
      modifier validProductId(uint256 productId) {
         require(productId < numProducts);
         _;
     }
 
-    // function checkProduct(uint256 productId) returns (productObj) {
-    //     return products[productId];
-        
-    // }
+    // check product information
+    function checkProduct(uint256 productId) public returns (productObj memory) {
+        return products[productId];
+    }
 
     // function that adds new product (run by manufacturer)
-    function addProduct(uint256 _manufacturerId, uint256 price) public isManufacturer(msg.sender) validManufacturer(_manufacturerId)  {
+    // function addProduct(uint256 _manufacturerId, uint256 price) public isManufacturer(msg.sender) validManufacturer(_manufacturerId)  {
+    //     // Create a new product object with default values
+    //     productObj memory newProduct;
+    //     uint256 newProductId = numProducts++;
+    //     newProduct.status = Status.Manufactured;
+    //     newProduct.manufacturerId = _manufacturerId;
+    //     // add price
+    //     newProduct.price = price;
+    //     // Add the product to the mapping
+    //     products[newProductId] = newProduct;
+         
+    // }
+
+    function addProduct(uint256 _manufacturerId, uint256 price) public validManufacturer(_manufacturerId, msg.sender) returns (uint256) {
         // Create a new product object with default values
         productObj memory newProduct;
         uint256 newProductId = numProducts++;
@@ -134,9 +148,9 @@ contract Product {
         newProduct.manufacturerId = _manufacturerId;
         // add price
         newProduct.price = price;
-        // Add the product to the mapping
+        // add the product to the mapping
         products[newProductId] = newProduct;
-         
+        return newProductId;
     }
 
     // function that authorize wholesaler (run by manufacturer)
