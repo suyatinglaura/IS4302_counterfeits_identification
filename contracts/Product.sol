@@ -141,6 +141,9 @@ contract Product {
     //     products[newProductId] = newProduct;
          
     // }
+    function product_status(uint256 productId) view public returns (Status status){
+        return products[productId].status;
+    }
 
     function addProduct(uint256 _manufacturerId, uint256 price) public validManufacturer(_manufacturerId, msg.sender) returns (uint256) {
         // Create a new product object with default values

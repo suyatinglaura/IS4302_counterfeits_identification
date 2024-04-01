@@ -91,4 +91,45 @@ contract("Product", function (accounts) {
 
     it("Add Wholesaler at Invalid Status", async() => {
     });
+
+    // Unit test to check whether retailer can be successfully registered
+    it("Add Retailer", async() => {
+        // register a Retailer
+        let retailer_id = await RetailerInstance.registerRetailer("retailer1", "PGPR #17-01, Singapore",{from: accounts[1]});
+        // add product 
+        let id = await ProductInstance.addProduct(0, 1, {from: accounts[1]});
+        // add Wholesaler from Manufacturer 0
+        await ProductInstance.addRetailer(id, retailer_id, {from: accounts[1]});
+        let status = await ProductInstance.product_status(id);
+        assert.equal(status, ProductInstance.Status.Retailed, "Retailer is not added successfully.");
+    });
+
+    // Check if we can successfully extract retailer information
+    it("Get Retailer Details", async() => {
+        let retailer_id = await RetailerInstance.registerRetailer("retailer2", "PGPR #18-01, Singapore",{from: accounts[1]});
+        let name, location = await RetailerInstance.getRetailerDetails(retailer_id)
+        assert.equal(name, "retailer2", "Retailer Info cannot be extracted.");
+        assert.equal(location, "PGPR #18-01, Singapore", "Retailer Info cannot be extracted.");
+    });
+
+    // test retailerExists with unregistered retailer 
+    it("Should return false if retailer does not exist", async () => {
+        let retailerExists = await RetailerInstance.retailerExists(accounts[6]);
+        assert.equal(retailerExists, false, "Retailer should not exist");
+      });
+
+    // test retailerExists with registered retailer 
+    it("Should return true if retailer exists", async () => {
+        let retailerExists = await RetailerInstance.retailerExists(accounts[1]);
+        assert.equal(retailerExists, true, "Retailer should exist!");
+      });
+
+    // Check retailer address
+    it("Check retailer address", async () => {
+        let retailer_id = await RetailerInstance.registerRetailer("retailer3", "PGPR #28-01, Singapore",{from: accounts[1]});
+        let address = await RetailerInstance.checkRetailer(retailer_id);
+        assert.equal(address, accounts[1], "Retailer address is not recorded!");
+      });
+      
+
 });
