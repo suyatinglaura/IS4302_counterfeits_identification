@@ -246,7 +246,7 @@
   "sourceMap": "1260:4914:0:-;;;1348:5;1318:35;;;;;;;;;;;;;;;;;;;;1387:10;1364:33;;;;;;;;;;;;;;;;;;;;1260:4914;8:9:-1;5:2;;;30:1;27;20:12;5:2;1260:4914:0;;;;;;;",
   "deployedSourceMap": "1260:4914:0:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;1260:4914:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1318:35;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;1532:41;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:10;8:100;;;99:1;94:3;90:11;84:18;80:1;75:3;71:11;64:39;52:2;49:1;45:10;40:15;;8:100;;;12:14;1532:41:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1621:35;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;2988:274;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;2988:274:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;2131:99;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;2131:99:0;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;3269:74;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;1364:33;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;1579:36;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:10;8:100;;;99:1;94:3;90:11;84:18;80:1;75:3;71:11;64:39;52:2;49:1;45:10;40:15;;8:100;;;12:14;1579:36:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2385:359;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;2385:359:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;1318:35;;;;;;;;;;;;;:::o;1532:41::-;;;;;;;;;;;;;;;;;;;:::o;1621:35::-;1654:2;1621:35;:::o;2988:274::-;3066:4;3402:5;;;;;;;;;;;3388:19;;:10;:19;;;3380:28;;;;;;3463:15;;;;;;;;;;;3462:16;3454:25;;;;;;3093;3110:7;3093:12;;:16;;:25;;;;:::i;:::-;3078:12;:40;;;;3140:26;3158:7;3140:8;:13;3149:3;3140:13;;;;;;;;;;;;;;;;:17;;:26;;;;:::i;:::-;3124:8;:13;3133:3;3124:13;;;;;;;;;;;;;;;:42;;;;3182:3;3177:18;;;3187:7;3177:18;;;;;;;;;;;;;;;;;;3227:3;3206:34;;3223:1;3206:34;;;3232:7;3206:34;;;;;;;;;;;;;;;;;;3253:4;3246:11;;2988:274;;;;:::o;2131:99::-;2187:7;2209:8;:16;2218:6;2209:16;;;;;;;;;;;;;;;;2202:23;;2131:99;;;:::o;3269:74::-;3310:7;3333:5;;;;;;;;;;;3326:12;;3269:74;:::o;1364:33::-;;;;;;;;;;;;;:::o;1579:36::-;;;;;;;;;;;;;;;;;;;:::o;2385:359::-;2448:4;2483:1;2468:17;;:3;:17;;;;2460:26;;;;;;2510:8;:19;2519:9;2510:19;;;;;;;;;;;;;;;;2500:6;:29;;2492:80;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2601:31;2625:6;2601:8;:19;2610:9;2601:19;;;;;;;;;;;;;;;;:23;;:31;;;;:::i;:::-;2579:8;:19;2588:9;2579:19;;;;;;;;;;;;;;;:53;;;;2654:25;2672:6;2654:8;:13;2663:3;2654:13;;;;;;;;;;;;;;;;:17;;:25;;;;:::i;:::-;2638:8;:13;2647:3;2638:13;;;;;;;;;;;;;;;:41;;;;2710:3;2690:32;;2699:9;2690:32;;;2715:6;2690:32;;;;;;;;;;;;;;;;;;2735:4;2728:11;;2385:359;;;;:::o;1133:123::-;1191:9;1216:1;1212;:5;1208:9;;1235:1;1230;:6;;1223:14;;;;1250:1;1243:8;;1133:123;;;;:::o;961:110::-;1019:7;1046:1;1041;:6;;1034:14;;;;1065:1;1061;:5;1054:12;;961:110;;;;:::o",
   "source": "pragma solidity ^0.5.0;\n\n//first need to approve the address of spender \n// Check the allowance\n//Finally able to call transferFrom to transfer tokens\n\n/**\n * @title SafeMath\n * @dev Math operations with safety checks that throw on error\n */\nlibrary SafeMath {\n\n  /**\n  * @dev Multiplies two numbers, throws on overflow.\n  */\n  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {\n    if (a == 0) {\n      return 0;\n    }\n    c = a * b;\n    assert(c / a == b);\n    return c;\n  }\n\n  /**\n  * @dev Integer division of two numbers, truncating the quotient.\n  */\n  function div(uint256 a, uint256 b) internal pure returns (uint256) {\n    // assert(b > 0); // Solidity automatically throws when dividing by 0\n    // uint256 c = a / b;\n    // assert(a == b * c + a % b); // There is no case in which this doesn't hold\n    return a / b;\n  }\n\n  /**\n  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).\n  */\n  function sub(uint256 a, uint256 b) internal pure returns (uint256) {\n    assert(b <= a);\n    return a - b;\n  }\n\n  /**\n  * @dev Adds two numbers, throws on overflow.\n  */\n  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {\n    c = a + b;\n    assert(c >= a);\n    return c;\n  }\n}\n\ncontract ERC20 {\n    using SafeMath for uint256;\n    \n    bool public mintingFinished = false;\n    \n    address public owner = msg.sender;\n    \n    mapping (address => mapping (address => uint256)) internal allowed;\n    mapping(address => uint256) balances;\n    \n    \n    string public constant name = \"DiceToken\";\n    string public constant symbol = \"DT\";\n    uint8 public constant decimals = 18;\n    uint256 totalSupply_;\n  \n    event Transfer(address indexed from, address indexed to, uint256 value);\n    event Approval(address indexed owner, address indexed spender, uint256 value);\n    event Mint(address indexed to, uint256 amount);\n    event MintFinished();\n\n  \n    /**\n  * @dev Gets the balance of the specified address.\n  * @param _owner The address to query the the balance of.\n  * @return An uint256 representing the amount owned by the passed address.\n  */\n  function balanceOf(address _owner) public view returns (uint256) {\n    return balances[_owner];\n  }\n\n\n  /**\n  * @dev transfer token for a specified address\n  * @param _to The address to transfer to.\n  * @param _value The amount to be transferred.\n  */\n  function transfer(address _to, uint256 _value) public returns (bool) {\n    require(_to != address(0));\n    require(_value <= balances[tx.origin], \"msg.sender doesn't have enough balance\");\n\n    balances[tx.origin] = balances[tx.origin].sub(_value);\n    balances[_to] = balances[_to].add(_value);\n    emit Transfer(tx.origin, _to, _value);\n    return true;\n  }\n\n  \n  \n    /**\n   * @dev Function to mint tokens\n   * @param _to The address that will receive the minted tokens.\n   * @param _amount The amount of tokens to mint.\n   * @return A boolean that indicates if the operation was successful.\n   */\n  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {\n    totalSupply_ = totalSupply_.add(_amount);\n    balances[_to] = balances[_to].add(_amount);\n    emit Mint(_to, _amount);\n    emit Transfer(address(0), _to, _amount);\n    return true;\n  }\n\n  \n  function getOwner() public view returns (address){\n      return owner;\n  }\n  \n  \n   modifier onlyOwner() {\n    require(msg.sender == owner);\n    _;\n  }\n  \n  \n  modifier canMint() {\n    require(!mintingFinished);\n    _;\n  }\n\n\n  /*\n  Functions that are no longer needed // ====MIDTERMS 2023====\n  *\n\n\n  // /**\n  //  * @dev Function to stop minting new tokens.\n  //  * @return True if the operation was successful.\n  //  */\n  // function finishMinting() onlyOwner canMint public returns (bool) {\n  //   mintingFinished = true;\n  //   emit MintFinished();\n  //   return true;\n  // }\n\n\n  // /**\n  //  * @dev Transfer tokens from one address to another\n  //  * @param _from address The address which you want to send tokens from\n  //  * @param _to address The address which you want to transfer to\n  //  * @param _value uint256 the amount of tokens to be transferred\n  //  */\n  // function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {\n  //   require(_to != address(0));\n  //   require(_value <= balances[_from], \"From doesn't have enough balance\");\n  //   require(_value <= allowed[_from][tx.origin], \"Not allowed to spend this much\");\n\n  //   balances[_from] = balances[_from].sub(_value);\n  //   balances[_to] = balances[_to].add(_value);\n  //   allowed[_from][tx.origin] = allowed[_from][tx.origin].sub(_value);\n  //   emit Transfer(_from, _to, _value);\n  //   return true;\n  // }\n\n  // /**\n  //  * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.\n  //  *\n  //  * Beware that changing an allowance with this method brings the risk that someone may use both the old\n  //  * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this\n  //  * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:\n  //  * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729\n  //  * @param _spender The address which will spend the funds.\n  //  * @param _value The amount of tokens to be spent.\n  //  */\n  // function approve(address _spender, uint256 _value) public returns (bool) {\n  //   allowed[msg.sender][_spender] = _value;\n  //   emit Approval(msg.sender, _spender, _value);\n  //   return true;\n  // }\n\n  // /**\n  //  * @dev Function to check the amount of tokens that an owner allowed to a spender.\n  //  * @param _owner address The address which owns the funds.\n  //  * @param _spender address The address which will spend the funds.\n  //  * @return A uint256 specifying the amount of tokens still available for the spender.\n  //  */\n  // function allowance(address _owner, address _spender) public view returns (uint256) {\n  //   return allowed[_owner][_spender];\n  // }\n\n\n  // /**\n  // * @dev total number of tokens in existence\n  // */\n  // function totalSupply() public view returns (uint256) {\n  //   return totalSupply_;\n  // }\n}",
-  "sourcePath": "/Users/zhuxiaoxiao/Desktop/IS4302_counterfeits_identification/contracts/ERC20.sol",
+  "sourcePath": "/Users/huangjunjing/Desktop/IS4302_counterfeits_identification/contracts/ERC20.sol",
   "ast": {
     "absolutePath": "project:/contracts/ERC20.sol",
     "exportedSymbols": {
@@ -548,7 +548,7 @@
                       "name": "assert",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 1365,
+                      "referencedDeclaration": 1379,
                       "src": "458:6:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_assert_pure$_t_bool_$returns$__$",
@@ -930,7 +930,7 @@
                       "name": "assert",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 1365,
+                      "referencedDeclaration": 1379,
                       "src": "1034:6:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_assert_pure$_t_bool_$returns$__$",
@@ -1258,7 +1258,7 @@
                       "name": "assert",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 1365,
+                      "referencedDeclaration": 1379,
                       "src": "1223:6:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_assert_pure$_t_bool_$returns$__$",
@@ -1528,7 +1528,7 @@
                 "name": "msg",
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
-                "referencedDeclaration": 1376,
+                "referencedDeclaration": 1390,
                 "src": "1387:3:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_magic_message",
@@ -2339,10 +2339,10 @@
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        1379,
-                        1380
+                        1393,
+                        1394
                       ],
-                      "referencedDeclaration": 1379,
+                      "referencedDeclaration": 1393,
                       "src": "2460:7:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$returns$__$",
@@ -2421,7 +2421,7 @@
                               "name": "tx",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 1388,
+                              "referencedDeclaration": 1402,
                               "src": "2519:2:0",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_magic_transaction",
@@ -2493,10 +2493,10 @@
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        1379,
-                        1380
+                        1393,
+                        1394
                       ],
-                      "referencedDeclaration": 1380,
+                      "referencedDeclaration": 1394,
                       "src": "2492:7:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
@@ -2553,7 +2553,7 @@
                           "name": "tx",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 1388,
+                          "referencedDeclaration": 1402,
                           "src": "2588:2:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_transaction",
@@ -2635,7 +2635,7 @@
                               "name": "tx",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 1388,
+                              "referencedDeclaration": 1402,
                               "src": "2610:2:0",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_magic_transaction",
@@ -2869,7 +2869,7 @@
                           "name": "tx",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 1388,
+                          "referencedDeclaration": 1402,
                           "src": "2699:2:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_transaction",
@@ -3831,7 +3831,7 @@
                             "name": "msg",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 1376,
+                            "referencedDeclaration": 1390,
                             "src": "3388:3:0",
                             "typeDescriptions": {
                               "typeIdentifier": "t_magic_message",
@@ -3885,10 +3885,10 @@
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        1379,
-                        1380
+                        1393,
+                        1394
                       ],
-                      "referencedDeclaration": 1379,
+                      "referencedDeclaration": 1393,
                       "src": "3380:7:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$returns$__$",
@@ -3984,10 +3984,10 @@
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        1379,
-                        1380
+                        1393,
+                        1394
                       ],
-                      "referencedDeclaration": 1379,
+                      "referencedDeclaration": 1393,
                       "src": "3454:7:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$returns$__$",
@@ -4401,7 +4401,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 1365,
+                              "referencedDeclaration": 1379,
                               "type": "function (bool) pure",
                               "value": "assert"
                             },
@@ -4851,7 +4851,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 1365,
+                              "referencedDeclaration": 1379,
                               "type": "function (bool) pure",
                               "value": "assert"
                             },
@@ -5208,7 +5208,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 1365,
+                              "referencedDeclaration": 1379,
                               "type": "function (bool) pure",
                               "value": "assert"
                             },
@@ -5439,7 +5439,7 @@
                       "overloadedDeclarations": [
                         null
                       ],
-                      "referencedDeclaration": 1376,
+                      "referencedDeclaration": 1390,
                       "type": "msg",
                       "value": "msg"
                     },
@@ -6304,10 +6304,10 @@
                                 }
                               ],
                               "overloadedDeclarations": [
-                                1379,
-                                1380
+                                1393,
+                                1394
                               ],
-                              "referencedDeclaration": 1379,
+                              "referencedDeclaration": 1393,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -6445,10 +6445,10 @@
                                 }
                               ],
                               "overloadedDeclarations": [
-                                1379,
-                                1380
+                                1393,
+                                1394
                               ],
-                              "referencedDeclaration": 1380,
+                              "referencedDeclaration": 1394,
                               "type": "function (bool,string memory) pure",
                               "value": "require"
                             },
@@ -6527,7 +6527,7 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 1388,
+                                          "referencedDeclaration": 1402,
                                           "type": "tx",
                                           "value": "tx"
                                         },
@@ -6632,7 +6632,7 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 1388,
+                                      "referencedDeclaration": 1402,
                                       "type": "tx",
                                       "value": "tx"
                                     },
@@ -6724,7 +6724,7 @@
                                               "overloadedDeclarations": [
                                                 null
                                               ],
-                                              "referencedDeclaration": 1388,
+                                              "referencedDeclaration": 1402,
                                               "type": "tx",
                                               "value": "tx"
                                             },
@@ -7003,7 +7003,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 1388,
+                                  "referencedDeclaration": 1402,
                                   "type": "tx",
                                   "value": "tx"
                                 },
@@ -7915,10 +7915,10 @@
                                 }
                               ],
                               "overloadedDeclarations": [
-                                1379,
-                                1380
+                                1393,
+                                1394
                               ],
-                              "referencedDeclaration": 1379,
+                              "referencedDeclaration": 1393,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -7959,7 +7959,7 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 1376,
+                                      "referencedDeclaration": 1390,
                                       "type": "msg",
                                       "value": "msg"
                                     },
@@ -8062,10 +8062,10 @@
                                 }
                               ],
                               "overloadedDeclarations": [
-                                1379,
-                                1380
+                                1393,
+                                1394
                               ],
-                              "referencedDeclaration": 1379,
+                              "referencedDeclaration": 1393,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -8145,7 +8145,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.16",
-  "updatedAt": "2024-04-01T17:54:30.846Z",
+  "updatedAt": "2024-04-02T13:49:22.059Z",
   "devdoc": {
     "methods": {
       "balanceOf(address)": {

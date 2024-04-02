@@ -145,6 +145,10 @@ contract Product {
         return products[productId].status;
     }
 
+    function is_sold(uint256 productId) view public returns (bool){
+        return products[productId].status == Status.Sold;
+    }
+
     function addProduct(uint256 _manufacturerId, uint256 price) public validManufacturer(_manufacturerId, msg.sender) returns (uint256) {
         // Create a new product object with default values
         productObj memory newProduct;
@@ -172,6 +176,7 @@ contract Product {
         require(wholesalerContract.checkWholesaler(products[productId].wholesalerId)==msg.sender, "You are not the wholesaler of this product");
         products[productId].retailerId = retailerId; // update retailer id
         products[productId].status = Status.Retailed; // update product status
+        emit returnProduct(products[productId]);
     }
     
 
@@ -236,6 +241,8 @@ contract Product {
         // products[productId].prevOwner = products[productId].owner;
         products[productId].customer  = newOwner;
     }
+
+    
 
 
 }

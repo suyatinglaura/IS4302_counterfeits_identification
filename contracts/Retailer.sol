@@ -40,6 +40,7 @@ contract Retailer {
     mapping(uint256 => retailerObj) public retailerArr; //retailerID to retailerObj
     mapping (address => bool) retailerList; // keep track of the existence of each retailer
     mapping (uint256 => address) retailers;
+    event returnRetailer(uint256);
 
 
     uint256 public numRetailers = 0;
@@ -57,6 +58,7 @@ contract Retailer {
         retailerArr[newRetailerId] = newRetailer;
         retailerList[msg.sender] = true;
         retailers[newRetailerId] = msg.sender;
+
         return newRetailerId; 
     }
 

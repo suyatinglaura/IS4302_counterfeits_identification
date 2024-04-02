@@ -70,7 +70,7 @@
   "sourceMap": "48:1352:2:-;;;116:114;8:9:-1;5:2;;;30:1;27;20:12;5:2;116:114:2;147:7;157:11;;;;;:::i;:::-;;;;;;;;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;157:11:2;147:21;;194:1;178:13;;:17;;;;;;;;;;;;;;;;;;213:10;205:5;;:18;;;;;;;;;;;;;;;;;;116:114;48:1352;;;;;;;;;;:::o;:::-;;;;;;;",
   "deployedSourceMap": "48:1352:2:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;862:148;;8:9:-1;5:2;;;30:1;27;20:12;5:2;862:148:2;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;862:148:2;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;435:189;;;:::i;:::-;;;;;;;;;;;;;;;;;;;1230:168;;8:9:-1;5:2;;;30:1;27;20:12;5:2;1230:168:2;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;1230:168:2;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;862:148;916:7;935:14;952:13;;;;;;;;;;;:23;;;976:2;952:27;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;952:27:2;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;952:27:2;;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;952:27:2;;;;;;;;;;;;;;;;935:44;;996:6;989:13;;;862:148;;;:::o;435:189::-;480:7;499:11;526:23;513:9;:37;;;;;;499:51;;561:13;;;;;;;;;;;:18;;;580:10;592:3;561:35;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;561:35:2;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;561:35:2;;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;561:35:2;;;;;;;;;;;;;;;;;613:3;606:10;;;435:189;:::o;1230:168::-;1353:13;;;;;;;;;;;:22;;;1376:9;1387:3;1353:38;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;1353:38:2;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;1353:38:2;;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;1353:38:2;;;;;;;;;;;;;;;;;1230:168;;:::o",
   "source": "pragma solidity ^0.5.0;\n\nimport \"./ERC20.sol\";\n\ncontract PCToken {\n    ERC20 erc20Contract;\n    address owner;\n\n    constructor() public {\n        ERC20 e = new ERC20();\n        erc20Contract = e;\n        owner = msg.sender;\n    }\n    /**\n    * @dev Function to give PCT to the recipient for a given wei amount\n    * @return A uint256 representing the amount of DT bought by the msg.sender\n    */\n    // Currently, 1 PCT = 0.01Eth\n    function getCredit() public payable returns (uint256) {\n        uint256 amt = msg.value / (1000000000000000000/100); \n        erc20Contract.mint(msg.sender, amt);\n        return amt; \n    }\n\n    /**\n    * @dev Function to check the amount of PCT the msg.sender has\n    * @param ad address of the recipient that wants to check their PCT\n    * @return A uint256 representing the amount of PCT owned by the msg.sender.\n    */\n    function checkCredit(address ad) public view returns (uint256) {\n        uint256 credit = erc20Contract.balanceOf(ad);\n        return credit; \n    }\n    \n    /**\n    * @dev Function to transfer the credit from the owner to the recipient\n    * @param recipient address of the recipient that will gain in PCT\n    * @param amt uint256 aount of PCT to transfer\n    */\n    function transferCredit(address recipient, uint256 amt) public {\n        // Transfers from tx.origin to receipient\n        erc20Contract.transfer(recipient, amt);\n    }\n}",
-  "sourcePath": "/Users/zhuxiaoxiao/Desktop/IS4302_counterfeits_identification/contracts/PCToken.sol",
+  "sourcePath": "/Users/huangjunjing/Desktop/IS4302_counterfeits_identification/contracts/PCToken.sol",
   "ast": {
     "absolutePath": "project:/contracts/PCToken.sol",
     "exportedSymbols": {
@@ -337,7 +337,7 @@
                         "name": "msg",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 1376,
+                        "referencedDeclaration": 1390,
                         "src": "213:3:2",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
@@ -453,7 +453,7 @@
                         "name": "msg",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 1376,
+                        "referencedDeclaration": 1390,
                         "src": "513:3:2",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
@@ -569,7 +569,7 @@
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 1376,
+                          "referencedDeclaration": 1390,
                           "src": "580:3:2",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
@@ -1460,7 +1460,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 1376,
+                                  "referencedDeclaration": 1390,
                                   "type": "msg",
                                   "value": "msg"
                                 },
@@ -1621,7 +1621,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 1376,
+                                  "referencedDeclaration": 1390,
                                   "type": "msg",
                                   "value": "msg"
                                 },
@@ -1789,7 +1789,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 1376,
+                                  "referencedDeclaration": 1390,
                                   "type": "msg",
                                   "value": "msg"
                                 },
@@ -2299,12 +2299,12 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0x2A7816d66b2CaD2561f13dB914c55377d9a42DB5",
-      "transactionHash": "0xd015b689e7703a06d4ec71baab5cbcf979b254e981f835a9599f7253b348fdfe"
+      "address": "0x798eFD681D47d679Ec654cE882eCaB3Fde26d894",
+      "transactionHash": "0x27e4c338e892e85d500f986b38721c22985c35eb89fee2fb0515a85db982b328"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2024-04-01T17:55:30.799Z",
+  "updatedAt": "2024-04-02T14:26:52.326Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {

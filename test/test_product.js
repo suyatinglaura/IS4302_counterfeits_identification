@@ -130,6 +130,12 @@ contract("Product", function (accounts) {
         let address = await RetailerInstance.checkRetailer(retailer_id);
         assert.equal(address, accounts[1], "Retailer address is not recorded!");
       });
-      
+
+    //check pay by token
+    it("Check pay by token", async () => {
+        await PCTokenInstance.getCredit({from: accounts[3], value: oneEth});
+        await ProductInstance.purchase_by_token(0, {from: accounts[1]});
+        assert.equal(ProductInstance.is_sold(0), true, "Status is still not sold");
+    });
 
 });

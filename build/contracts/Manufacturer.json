@@ -65,7 +65,7 @@
   "sourceMap": "25:1161:1:-;;;78:1;51:28;;25:1161;8:9:-1;5:2;;;30:1;27;20:12;5:2;25:1161:1;;;;;;;",
   "deployedSourceMap": "25:1161:1:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;862:136;;8:9:-1;5:2;;;30:1;27;20:12;5:2;862:136:1;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;862:136:1;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;534:285;;;:::i;:::-;;;;;;;;;;;;;;;;;;;1053:131;;8:9:-1;5:2;;;30:1;27;20:12;5:2;1053:131:1;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;1053:131:1;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;862:136;933:7;959:13;:29;973:14;959:29;;;;;;;;;;;;;;;;;;;;;952:36;;862:136;;;:::o;534:285::-;609:7;590:9;397:7;390:3;:14;;382:89;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;628:25;656:16;;:18;;;;;;;;;;;;628:46;;719:10;684:13;:32;698:17;684:32;;;;;;;;;;;;:45;;;;;;;;;;;;;;;;;;771:4;739:17;:29;757:10;739:29;;;;;;;;;;;;;;;;:36;;;;;;;;;;;;;;;;;;792:17;785:24;;;534:285;;:::o;1053:131::-;1123:4;1146:17;:31;1164:12;1146:31;;;;;;;;;;;;;;;;;;;;;;;;;1139:38;;1053:131;;;:::o",
   "source": "pragma solidity ^0.5.0;\n\ncontract Manufacturer {\n\n\tuint256 numManufacturers = 0;\n\tmapping (uint256 => address) manufacturers; // keep track of the address of each manufacturer\n    mapping (address => bool) manufacturersList; // keep track of the existence of each manufacturer\n\n    // Min 1 ether is required to register as a manufacturer\n    modifier minFee(uint256 fee) {\n        require(fee >= 1 ether, \"You should commit at least 1 ether to register as a wholesaler\");\n        _;\n    }\n\n    // User register as a manufacturer\n    function registerAsManufacturer() public payable minFee(msg.value) returns(uint256) {\n        uint256 newManufacturerId = numManufacturers++;\n        manufacturers[newManufacturerId] = msg.sender;\n        manufacturersList[msg.sender] = true;\n        return newManufacturerId;   \n    }\n\n    // Checks wholesaler information\n    function checkManufacturer(uint256 manufacturerId) public view returns(address) {\n        return manufacturers[manufacturerId];   \n    }\n\n    // function that checks wholesaler existence\n    function manufacturerExists(address manufacturer) public view returns(bool) {\n        return manufacturersList[manufacturer];\n    }\n}",
-  "sourcePath": "/Users/zhuxiaoxiao/Desktop/IS4302_counterfeits_identification/contracts/Manufacturer.sol",
+  "sourcePath": "/Users/huangjunjing/Desktop/IS4302_counterfeits_identification/contracts/Manufacturer.sol",
   "ast": {
     "absolutePath": "project:/contracts/Manufacturer.sol",
     "exportedSymbols": {
@@ -328,10 +328,10 @@
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        1379,
-                        1380
+                        1393,
+                        1394
                       ],
-                      "referencedDeclaration": 1380,
+                      "referencedDeclaration": 1394,
                       "src": "382:7:1",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
@@ -532,7 +532,7 @@
                         "name": "msg",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 1376,
+                        "referencedDeclaration": 1390,
                         "src": "719:3:1",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
@@ -595,7 +595,7 @@
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 1376,
+                          "referencedDeclaration": 1390,
                           "src": "757:3:1",
                           "typeDescriptions": {
                             "typeIdentifier": "t_magic_message",
@@ -693,7 +693,7 @@
                       "name": "msg",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 1376,
+                      "referencedDeclaration": 1390,
                       "src": "590:3:1",
                       "typeDescriptions": {
                         "typeIdentifier": "t_magic_message",
@@ -1301,10 +1301,10 @@
                                 }
                               ],
                               "overloadedDeclarations": [
-                                1379,
-                                1380
+                                1393,
+                                1394
                               ],
-                              "referencedDeclaration": 1380,
+                              "referencedDeclaration": 1394,
                               "type": "function (bool,string memory) pure",
                               "value": "require"
                             },
@@ -1496,7 +1496,7 @@
                           "overloadedDeclarations": [
                             null
                           ],
-                          "referencedDeclaration": 1376,
+                          "referencedDeclaration": 1390,
                           "type": "msg",
                           "value": "msg"
                         },
@@ -1659,7 +1659,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 1376,
+                                  "referencedDeclaration": 1390,
                                   "type": "msg",
                                   "value": "msg"
                                 },
@@ -1737,7 +1737,7 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 1376,
+                                      "referencedDeclaration": 1390,
                                       "type": "msg",
                                       "value": "msg"
                                     },
@@ -2130,12 +2130,12 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0x3970bA6f0713BD2b74d519d7D8241Cd09e793D11",
-      "transactionHash": "0xdcb007038cb8108b2639fa2dbddaf47a6612a125c841936780f6afb1b8a441aa"
+      "address": "0xa8cbf8Cc2c4b6Fa81A8D99A3944d8a865CeB845f",
+      "transactionHash": "0x1ef092e921e31ee443ba1d6dbe8e52fbbf9a6e0b76c8fd75e9abd509eaae85e9"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2024-04-01T17:55:30.818Z",
+  "updatedAt": "2024-04-02T14:26:52.330Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {}
