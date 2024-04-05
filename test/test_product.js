@@ -41,6 +41,21 @@ contract("Product", function (accounts) {
         await truffleAssert.reverts(ManufacturerInstance.registerAsManufacturer({from: accounts[1], value: 100}), "You should commit at least 1 ether to register as a wholesaler");
     });
 
+    
+    it("Register as Wholesaler", async() => {
+        // register a Manufacturer
+        await WholesalerInstance.registerAsManufacturer({from: accounts[1], value: oneEth});
+        // test that the Manufacturer exists
+        assert.strictEqual(await WholesalerInstance.wholesalerExists(accounts[1]), true, "Wholesaler is not successfully registered");
+        // test that the Manufacturer id is 0
+        assert.strictEqual(await Wholesaler.checkWholesaler(0), accounts[1], "Wholesaler is not successfully registered");
+    });
+
+    it("Register as Wholesaler with Insufficient Ether", async() => {
+        // attempt to register a Manufacturer with insufficient amount of Ether sent
+        await truffleAssert.reverts(WholesalerInstance.registerAsManufacturer({from: accounts[1], value: 100}), "You should commit at least 1 ether to register as a wholesaler");
+    });
+
     it("Add Product", async() => {
         // register a Manufacturer
         await ManufacturerInstance.registerAsManufacturer({from: accounts[1], value: oneEth});
