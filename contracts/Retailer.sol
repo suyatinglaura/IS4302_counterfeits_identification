@@ -77,8 +77,4 @@ contract Retailer {
         return retailers[retailerId];   
     }
 
-
-
-
-
 }
