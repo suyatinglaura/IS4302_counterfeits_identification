@@ -43,11 +43,11 @@ contract("Product", function (accounts) {
 
     
     it("Register as Wholesaler", async() => {
-        // register a Manufacturer
-        await WholesalerInstance.registerAsManufacturer({from: accounts[1], value: oneEth});
-        // test that the Manufacturer exists
+        // register a Wholesaler
+        await WholesalerInstance.registerAsWholesaler({from: accounts[1], value: oneEth});
+        // test that the Wholesaler exists
         assert.strictEqual(await WholesalerInstance.wholesalerExists(accounts[1]), true, "Wholesaler is not successfully registered");
-        // test that the Manufacturer id is 0
+        // test that the Wholesaler id is 0
         assert.strictEqual(await Wholesaler.checkWholesaler(0), accounts[1], "Wholesaler is not successfully registered");
     });
 
