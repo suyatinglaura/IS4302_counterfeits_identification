@@ -232,13 +232,13 @@ contract Product {
         emit returnProduct(products[id]);
     }
 
-    function purchase_by_cash(uint productId) public {
+    function purchase_by_cash(uint productId, address customer) public {
         //no need to do fund transfer
         Status status = products[productId].status;
         require(status != Status.Stolen, "Product not available for sale.");
         require(status != Status.Sold, "Product not available for sale.");
         products[productId].status = Status.Sold;
-        products[productId].customer = msg.sender;
+        products[productId].customer = customer;
         emit returnProduct(products[productId]);
     }
 
