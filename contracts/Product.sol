@@ -234,13 +234,18 @@ contract Product {
 
     function purchase_by_cash(uint productId, address customer) public {
         //no need to do fund transfer
-        require(retailerContract.checkRetailer(products[productId].retailerId) == msg.sender, "");
+        require(retailerContract.checkRetailer(products[productId].retailerId) == msg.sender, "only retailer of the product can call");
         Status status = products[productId].status;
         require(status != Status.Stolen, "Product not available for sale.");
         require(status != Status.Sold, "Product not available for sale.");
         products[productId].status = Status.Sold;
         products[productId].customer = customer;
         emit returnProduct(products[productId]);
+    }
+
+    function tranfer_ownership(uint productId, address customer) public {
+        require(products[productId].customer == msg.sender, "only the owner of the product can call");
+        products[productId].customer = customer;
     }
 
 
