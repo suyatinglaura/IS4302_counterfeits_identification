@@ -224,6 +224,7 @@ contract Product {
         productTokenContract.transferCredit(address(this), products[id].price);
         // Update the status of the purchased product to "Sold"
         products[id].status = Status.Sold;
+        products[id].customer = msg.sender;
     }
 
     function purchase_by_cash(uint productId) public {
