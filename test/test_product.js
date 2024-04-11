@@ -143,8 +143,22 @@ contract("Product", function (accounts) {
     //check pay by token
     it("Check pay by token", async () => {
         await PCTokenInstance.getCredit({from: accounts[3], value: oneEth});
-        await ProductInstance.purchase_by_token(0, {from: accounts[1]});
-        assert.equal(ProductInstance.is_sold(0), true, "Status is still not sold");
+        let result = await ProductInstance.purchase_by_token(0, {from: accounts[1]});
+        let emittedEvent = result.logs[0];
+        assert.equal(emittedEvent.args['0']['status'], Product.Status.Sold, "Product is not successfully sold");
     });
 
+    //check report stolen token
+    it("Check report stolen", async () => {
+
+        await ManufacturerInstance.registerAsManufacturer({from: accounts[1], value: oneEth});
+        // add Product from Manufacturer 0
+
+        await ProductInstance.addProduct(0, 1, {from: accounts[1]});
+        await ProductInstance.purchase_by_cash(0, {from: accounts[2]});
+        let result = await ProductInstance.reportStolen(0, accounts[2], {from: accounts[2]});
+        let emittedEvent = result.logs[0];
+        // // test that the Product is of Manufactured status
+        assert.equal(emittedEvent.args['0']['status'], Product.Status.Stolen, "Product is not successfully reported stolen");
+    });
 });

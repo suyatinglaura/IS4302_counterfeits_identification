@@ -59,6 +59,7 @@ contract Product {
         uint256 retailerId;
         address customer;
         uint256 price; // in terms of # of PCTokens 
+        uint256 id;
     }
 
     mapping (uint256 => productObj) products;
@@ -157,6 +158,7 @@ contract Product {
         newProduct.manufacturerId = _manufacturerId;
         // add price
         newProduct.price = price;
+        newProduct.id = newProductId;
         // add the product to the mapping
         products[newProductId] = newProduct;
         emit returnProduct(newProduct);
@@ -199,6 +201,7 @@ contract Product {
         if (products[id].customer == _customer){
             products[id].status = Status.Stolen;
         }
+        emit returnProduct(products[id]);
     }
 
     function reportCounterfeit(uint id, address _customer) public payable {
@@ -209,6 +212,7 @@ contract Product {
         if (products[id].customer == _customer){
             products[id].status = Status.Counterfeit;
         }
+        emit returnProduct(products[id]);
     }
 
 // Function for customer to purchase from retailer
@@ -225,6 +229,7 @@ contract Product {
         // Update the status of the purchased product to "Sold"
         products[id].status = Status.Sold;
         products[id].customer = msg.sender;
+        emit returnProduct(products[id]);
     }
 
     function purchase_by_cash(uint productId) public {
@@ -233,17 +238,10 @@ contract Product {
         require(status != Status.Stolen, "Product not available for sale.");
         require(status != Status.Sold, "Product not available for sale.");
         products[productId].status = Status.Sold;
-        transfer(productId, msg.sender);
-
+        products[productId].customer = msg.sender;
+        emit returnProduct(products[productId]);
     }
 
-    // function transfer ownership
-    function transfer(uint256 productId, address newOwner) public ownerOnly(productId) validProductId(productId) {
-        // products[productId].prevOwner = products[productId].owner;
-        products[productId].customer  = newOwner;
-    }
-
-    
 
 
 }
