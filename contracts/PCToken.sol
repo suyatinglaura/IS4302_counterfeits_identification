@@ -24,11 +24,10 @@ contract PCToken {
 
     /**
     * @dev Function to check the amount of PCT the msg.sender has
-    * @param ad address of the recipient that wants to check their PCT
     * @return A uint256 representing the amount of PCT owned by the msg.sender.
     */
-    function checkCredit(address ad) public view returns (uint256) {
-        uint256 credit = erc20Contract.balanceOf(ad);
+    function checkCredit() public view returns (uint256) {
+        uint256 credit = erc20Contract.balanceOf(msg.sender);
         return credit; 
     }
     

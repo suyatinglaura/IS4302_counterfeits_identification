@@ -32,8 +32,8 @@ contract("Product", function (accounts) {
         await ManufacturerInstance.registerAsManufacturer({from: accounts[1], value: oneEth});
         // test that the Manufacturer exists
         assert.strictEqual(await ManufacturerInstance.manufacturerExists(accounts[1]), true, "Manufacturer is not successfully registered");
-        // test that the Manufacturer id is 0
-        assert.strictEqual(await ManufacturerInstance.checkManufacturer(0), accounts[1], "Manufacturer is not successfully registered");
+        // test that the Manufacturer id is 1
+        assert.strictEqual(await ManufacturerInstance.checkManufacturer(1), accounts[1], "Manufacturer is not successfully registered");
     });
 
     it("Register as Manufacturer with Insufficient Ether", async() => {
@@ -47,23 +47,23 @@ contract("Product", function (accounts) {
         await WholesalerInstance.registerAsWholesaler({from: accounts[1], value: oneEth});
         // test that the Wholesaler exists
         assert.strictEqual(await WholesalerInstance.wholesalerExists(accounts[1]), true, "Wholesaler is not successfully registered");
-        // test that the Wholesaler id is 0
-        assert.strictEqual(await Wholesaler.checkWholesaler(0), accounts[1], "Wholesaler is not successfully registered");
+        // test that the Wholesaler id is 1
+        assert.strictEqual(await WholesalerInstance.checkWholesaler(1), accounts[1], "Wholesaler is not successfully registered");
     });
 
     it("Register as Wholesaler with Insufficient Ether", async() => {
         // attempt to register a Manufacturer with insufficient amount of Ether sent
-        await truffleAssert.reverts(WholesalerInstance.registerAsManufacturer({from: accounts[1], value: 100}), "You should commit at least 1 ether to register as a wholesaler");
+        await truffleAssert.reverts(WholesalerInstance.registerAsWholesaler({from: accounts[1], value: 100}), "You should commit at least 1 ether to register as a wholesaler");
     });
 
     it("Add Product", async() => {
         // register a Manufacturer
         await ManufacturerInstance.registerAsManufacturer({from: accounts[1], value: oneEth});
-        // add Product from Manufacturer 0
-        let result = await ProductInstance.addProduct(0, 1, {from: accounts[1]});
+        // add Product from Manufacturer 1
+        let result = await ProductInstance.addProduct(1, {from: accounts[1]});
         let emittedEvent = result.logs[0];
-        // test that the Manufacturer id of Product 0 is 0
-        assert.equal(emittedEvent.args['0']['manufacturerId'], 0, "Product is not successfully added");
+        // test that the Manufacturer id of Product 1 is 1
+        assert.equal(emittedEvent.args['0']['manufacturerId'], 1, "Product is not successfully added");
         // test that the Product is of Manufactured status
         assert.equal(emittedEvent.args['0']['status'], Product.Status.Manufactured, "Product is not successfully added");
     });
@@ -72,9 +72,9 @@ contract("Product", function (accounts) {
         // register a Manufacturer
         await ManufacturerInstance.registerAsManufacturer({from: accounts[1], value: oneEth});
         // attempt to add a Product from non-existent Manufacturer
-        await truffleAssert.reverts(ProductInstance.addProduct(1, 1, {from: accounts[2]}), "Please provide a valid manufacturer ID");
+        await truffleAssert.reverts(ProductInstance.addProduct(2, {from: accounts[1]}), "Please provide a valid manufacturer ID");
         // attempt to add a Product on other's behalf
-        await truffleAssert.reverts(ProductInstance.addProduct(0, 1, {from: accounts[2]}), "Please provide a valid manufacturer ID");
+        await truffleAssert.reverts(ProductInstance.addProduct(1, {from: accounts[2]}), "Please provide a valid manufacturer ID");
     });
 
     it("Add Wholesaler", async() => {
@@ -82,13 +82,13 @@ contract("Product", function (accounts) {
         await ManufacturerInstance.registerAsManufacturer({from: accounts[1], value: oneEth});
         // register a Wholesaler
         await WholesalerInstance.registerAsWholesaler({from: accounts[2], value: oneEth});
-        // add Product from Manufacturer 0
-        await ProductInstance.addProduct(0, 1, {from: accounts[1]});
-        // add Wholesaler from Manufacturer 0
-        let result = await ProductInstance.addWholesaler(0, 0, {from: accounts[1]});
+        // add Product from Manufacturer 1
+        await ProductInstance.addProduct(1, {from: accounts[1]});
+        // add Wholesaler from Manufacturer 1
+        let result = await ProductInstance.addWholesaler(1, 1, {from: accounts[1]});
         let emittedEvent = result.logs[0];
-        // test that the Wholesaler id of Product 0 is 0
-        assert.equal(emittedEvent.args['0']['wholesalerId'], 0, "Wholesaler is not successfully added");
+        // test that the Wholesaler id of Product 1 is 1
+        assert.equal(emittedEvent.args['0']['wholesalerId'], 1, "Wholesaler is not successfully added");
     });
 
     it("Add Wholesaler from invalid Manufacturer", async() => {
@@ -98,10 +98,10 @@ contract("Product", function (accounts) {
         await ManufacturerInstance.registerAsManufacturer({from: accounts[2], value: oneEth});
         // register a Wholesaler
         await WholesalerInstance.registerAsWholesaler({from: accounts[2], value: oneEth});
-        // add Product from Manufacturer 0
-        await ProductInstance.addProduct(0, 1, {from: accounts[1]});
-        // add Wholesaler from Manufacturer 1
-        await truffleAssert.reverts(ProductInstance.addWholesaler(0, 0, {from: accounts[2]}), "You are not the manufacturer of this product");
+        // add Product from Manufacturer 1
+        await ProductInstance.addProduct(1, {from: accounts[1]});
+        // add Wholesaler from Manufacturer 2
+        await truffleAssert.reverts(ProductInstance.addWholesaler(1, 1, {from: accounts[2]}), "You are not the manufacturer of this product");
     });
 
     it("Add Wholesaler at Invalid Status", async() => {
@@ -109,14 +109,15 @@ contract("Product", function (accounts) {
 
     // Unit test to check whether retailer can be successfully registered
     it("Add Retailer", async() => {
-        await ManufacturerInstance.registerAsManufacturer({from: accounts[5], value: oneEth});
-        await RetailerInstance.registerRetailer("retailer1", "PGPR #17-01, Singapore",{from: accounts[4], value: oneEth});
-        await ProductInstance.addProduct(0, 1, {from: accounts[5]});
-        await WholesalerInstance.registerAsWholesaler({from: accounts[2], value: oneEth});
-        await ProductInstance.addWholesaler(0, 0, {from: accounts[5]})
-        let result = await ProductInstance.addRetailer(0, 0, {from: accounts[2]});
+        await ManufacturerInstance.registerAsManufacturer({from: accounts[3], value: oneEth});
+        await WholesalerInstance.registerAsWholesaler({from: accounts[4], value: oneEth});
+        await RetailerInstance.registerAsRetailer({from: accounts[5], value: oneEth});
+        await ProductInstance.addProduct(1, {from: accounts[3]});
+        await ProductInstance.addWholesaler(1, 1, {from: accounts[3]});
+        await ProductInstance.receivedByWholesaler(1, {from: accounts[4]});
+        let result = await ProductInstance.addRetailer(1, 1, {from: accounts[4]});
         let emittedEvent = result.logs[0];
-        assert.equal(emittedEvent.args['0']['retailerId'], 0, "Wholesaler is not successfully added");
+        assert.equal(emittedEvent.args['0']['retailerId'], 1, "Retailer is not successfully added");
     });
 
     // test retailerExists with unregistered retailer 
@@ -140,25 +141,48 @@ contract("Product", function (accounts) {
         assert.equal(address, accounts[7], "Retailer address is not recorded!");
       });
 
-    //check pay by token
-    it("Check pay by token", async () => {
-        await PCTokenInstance.getCredit({from: accounts[3], value: oneEth});
-        let result = await ProductInstance.purchase_by_token(0, {from: accounts[1]});
-        let emittedEvent = result.logs[0];
-        assert.equal(emittedEvent.args['0']['status'], Product.Status.Sold, "Product is not successfully sold");
+    it("Token Purchase and Transfer", async () => {
+        await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
+        assert.equal(await PCTokenInstance.checkCredit({from: accounts[6]}), 100, "Tokens are purchased");
+        await PCTokenInstance.transferCredit(accounts[5], 1, {from: accounts[6]});
     });
 
-    //check report stolen token
-    it("Check report stolen", async () => {
+    // check pay by token
+    it("Purchased by token", async () => {
+        await ManufacturerInstance.registerAsManufacturer({from: accounts[3], value: oneEth});
+        await WholesalerInstance.registerAsWholesaler({from: accounts[4], value: oneEth});
+        await RetailerInstance.registerAsRetailer({from: accounts[5], value: oneEth});
+        await ProductInstance.addProduct(1, {from: accounts[3]});
+        await ProductInstance.addWholesaler(1, 1, {from: accounts[3]});
+        await ProductInstance.receivedByWholesaler(1, {from: accounts[4]});
+        await ProductInstance.addRetailer(1, 1, {from: accounts[4]});
+        await ProductInstance.receivedByRetailer(1, 1, {from: accounts[5]});
 
-        await ManufacturerInstance.registerAsManufacturer({from: accounts[1], value: oneEth});
-        // add Product from Manufacturer 0
-
-        await ProductInstance.addProduct(0, 1, {from: accounts[1]});
-        await ProductInstance.purchase_by_cash(0, {from: accounts[2]});
-        let result = await ProductInstance.reportStolen(0, accounts[2], {from: accounts[2]});
+        await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
+        let result = await ProductInstance.purchasedByToken(1, {from: accounts[6]});
         let emittedEvent = result.logs[0];
-        // // test that the Product is of Manufactured status
-        assert.equal(emittedEvent.args['0']['status'], Product.Status.Stolen, "Product is not successfully reported stolen");
+        assert.equal(emittedEvent.args['0']['status'], Product.Status.Sold, "Product is not successfully sold");
+        assert.equal(emittedEvent.args['0']['customer'], accounts[6], "Product is not successfully sold");
+        // need to check the balance change
+    });
+
+    // check report counterfeit
+    it("Check report counterfeit", async () => {
+        await ManufacturerInstance.registerAsManufacturer({from: accounts[3], value: oneEth});
+        await WholesalerInstance.registerAsWholesaler({from: accounts[4], value: oneEth});
+        await RetailerInstance.registerAsRetailer({from: accounts[5], value: oneEth});
+        await ProductInstance.addProduct(1, {from: accounts[3]});
+        await ProductInstance.addWholesaler(1, 1, {from: accounts[3]});
+        await ProductInstance.receivedByWholesaler(1, {from: accounts[4]});
+        await ProductInstance.addRetailer(1, 1, {from: accounts[4]});
+        await ProductInstance.receivedByRetailer(1, 1, {from: accounts[5]});
+        
+        await ProductInstance.purchasedByCustomer(1, accounts[6], {from: accounts[5]});
+        await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
+        let result = await ProductInstance.reportCounterfeit(1, {from: accounts[6]});
+        let emittedEvent = result.logs[0];
+        // test that the Product is of Counterfeit status
+        assert.equal(emittedEvent.args['0']['status'], Product.Status.Counterfeit, "Product is not successfully reported counterfeit");
+        // need to check the balance change
     });
 });
