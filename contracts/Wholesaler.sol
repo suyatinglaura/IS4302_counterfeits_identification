@@ -16,7 +16,7 @@ contract Wholesaler {
 
     // function that allows user to register as a wholesaler
     function registerAsWholesaler() public payable minFee(msg.value) returns(uint256) {
-        uint256 newWholesalerId = numWholesalers++;
+        uint256 newWholesalerId = ++numWholesalers;
         wholesalers[newWholesalerId] = msg.sender; // update wholesalers
         wholesalerList[msg.sender] = true; // update wholesaler list
         return newWholesalerId;   // return new wholesalerId

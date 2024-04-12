@@ -14,7 +14,7 @@ contract Manufacturer {
 
     // User register as a manufacturer
     function registerAsManufacturer() public payable minFee(msg.value) returns(uint256) {
-        uint256 newManufacturerId = numManufacturers++;
+        uint256 newManufacturerId = ++numManufacturers;
         manufacturers[newManufacturerId] = msg.sender;
         manufacturersList[msg.sender] = true;
         return newManufacturerId;   
