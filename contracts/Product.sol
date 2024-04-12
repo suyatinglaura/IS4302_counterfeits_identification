@@ -170,8 +170,15 @@ contract Product {
     
     // function to report stolen case
     function reportStolen(uint productId) public validStatus(productId, Status.Sold) {
-        // only allow owner of the product to report stolen
-        require(products[productId].customer == msg.sender, "You are not the owner of this product");
+        require(products[productId].status != Status.Stolen, "The product has already been reported as stolen.");
+        require(products[productId].status != Status.Counterfeit, "The product has been reported as counterfeit.");
+        //require(products[productId].customer == msg.sender, "You are not the owner of this product");
+        if (products[productId].status == Status.Sold) {
+            require((products[productId].customer == msg.sender) 
+            || 
+            (retailerContract.checkRetailer(products[productId].retailerId) == msg.sender), 
+            "Need to be reported by the customer / retailer.");
+        }
         products[productId].status = Status.Stolen; // update product status
         emit returnProduct(products[productId]);
     }
