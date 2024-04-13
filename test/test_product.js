@@ -120,6 +120,61 @@ contract("Product", function (accounts) {
         assert.equal(emittedEvent.args['0']['retailerId'], 1, "Retailer is not successfully added");
     });
 
+    it("Check Product by Manufacturer", async() => {
+        await ManufacturerInstance.registerAsManufacturer({from: accounts[1], value: oneEth});
+        let result = await ProductInstance.addProduct(1, {from: accounts[1]});
+        let emittedEvent = result.logs[0];
+
+        let product1 = await ProductInstance.checkProduct(1, {from:accounts[1]});
+        assert.equal(product1.id, emittedEvent.args['0']['id'], "Incorrect product ID from Manufacturer address");
+    });
+
+    it("Check Product by Wholesaler", async() => {
+        await ManufacturerInstance.registerAsManufacturer({from: accounts[1], value: oneEth});
+        await WholesalerInstance.registerAsWholesaler({from: accounts[2], value: oneEth});
+        await ProductInstance.addProduct(1, {from: accounts[1]});
+        await ProductInstance.addWholesaler(1, 1, {from: accounts[1]});
+        let result = await ProductInstance.receivedByWholesaler(1, {from: accounts[2]});
+        let emittedEvent = result.logs[0];
+
+        let product = await ProductInstance.checkProduct(1, {from:accounts[2]});
+        assert.equal(product.id, emittedEvent.args['0']['id'], "Incorrect check product ID from Wholesaler address");
+    });
+
+    it("Check Product by Retailer", async() => {
+        await ManufacturerInstance.registerAsManufacturer({from: accounts[1], value: oneEth});
+        await WholesalerInstance.registerAsWholesaler({from: accounts[2], value: oneEth});
+        await RetailerInstance.registerAsRetailer({from: accounts[3], value: oneEth});
+        await ProductInstance.addProduct(1, {from: accounts[1]});
+        await ProductInstance.addWholesaler(1, 1, {from: accounts[1]});
+        await ProductInstance.receivedByWholesaler(1, {from:accounts[2]});
+        await ProductInstance.addRetailer(1, 1, {from: accounts[2]});
+        let result = await ProductInstance.receivedByRetailer(1, 5, {from: accounts[3]});
+        let emittedEvent = result.logs[0];
+
+        let product = await ProductInstance.checkProduct(1, {from:accounts[3]});
+        assert.equal(product.id, emittedEvent.args['0']['id'], "Incorrect check product ID from Retailer address");
+    });
+
+    it("Check Product by Customer", async () => {
+        await ManufacturerInstance.registerAsManufacturer({from: accounts[3], value: oneEth});
+        await WholesalerInstance.registerAsWholesaler({from: accounts[4], value: oneEth});
+        await RetailerInstance.registerAsRetailer({from: accounts[5], value: oneEth});
+        await ProductInstance.addProduct(1, {from: accounts[3]});
+        await ProductInstance.addWholesaler(1, 1, {from: accounts[3]});
+        await ProductInstance.receivedByWholesaler(1, {from: accounts[4]});
+        await ProductInstance.addRetailer(1, 1, {from: accounts[4]});
+        await ProductInstance.receivedByRetailer(1, 1, {from: accounts[5]});
+        
+        let result = await ProductInstance.purchasedByCustomer(1, accounts[6], {from: accounts[5]});
+        let emittedEvent = result.logs[0];
+        let product = await ProductInstance.checkProduct(1, {from:accounts[6]});
+
+        assert.equal(product.id, emittedEvent.args['0']['id'], "Incorrect check product ID from Customer address");
+        // need to check the balance change
+    });
+
+
     // test retailerExists with unregistered retailer 
     it("Should return false if retailer does not exist", async () => {
         await RetailerInstance.registerRetailer("retailer2", "PGPR #18-01, Singapore",{from: accounts[5], value: oneEth});
