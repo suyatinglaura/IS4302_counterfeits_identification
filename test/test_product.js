@@ -161,6 +161,7 @@ contract("Product", function (accounts) {
         await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
         let result = await ProductInstance.purchasedByToken(1, {from: accounts[6]});
         let emittedEvent = result.logs[0];
+        assert.equal(1,2);
         assert.equal(emittedEvent.args['0']['status'], Product.Status.Sold, "Product is not successfully sold");
         assert.equal(emittedEvent.args['0']['customer'], accounts[6], "Product is not successfully sold");
         // need to check the balance change

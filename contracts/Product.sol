@@ -88,21 +88,13 @@ contract Product {
 
     // check valid id
      modifier validProductId(uint256 productId) {
-        require((productId >0)&&(productId <= numProducts));
+        require((productId >0)&&(productId <= numProducts), "Please provide a valid product ID");
         _;
     }
 
     // check product information
     function checkProduct(uint256 productId) view public returns (productObj memory) {
         return products[productId];
-    }
-
-    function product_status(uint256 productId) view public returns (Status status){
-        return products[productId].status;
-    }
-
-    function is_sold(uint256 productId) view public returns (bool){
-        return products[productId].status == Status.Sold;
     }
 
     // function that adds new product (run by manufacturer)
@@ -121,28 +113,28 @@ contract Product {
     }
 
     // function that authorizes wholesaler (run by manufacturer)
-    function addWholesaler(uint256 productId, uint256 wholesalerId) public isManufacturer(msg.sender) validWholesaler(wholesalerId) validStatus(productId, Status.Manufactured) {
+    function addWholesaler(uint256 productId, uint256 wholesalerId) public validProductId(productId) isManufacturer(msg.sender) validWholesaler(wholesalerId) validStatus(productId, Status.Manufactured) {
         require(manufacturerContract.checkManufacturer(products[productId].manufacturerId)==msg.sender, "You are not the manufacturer of this product");
         products[productId].wholesalerId = wholesalerId; // update wholesaler id
         emit returnProduct(products[productId]);
     }
 
     // function that is called after wholesaler receive the product (run by wholesaler)
-    function receivedByWholesaler(uint256 productId) public isWholesaler(msg.sender) validStatus(productId, Status.Wholesaled) {
-        require(wholesalerContract.checkWholesaler(products[productId].retailerId)==msg.sender, "You are not the wholesaler of this product");
+     function receivedByWholesaler(uint256 productId) public validProductId(productId) isWholesaler(msg.sender) validStatus(productId, Status.Manufactured) {
+        require(wholesalerContract.checkWholesaler(products[productId].wholesalerId)==msg.sender, "You are not the wholesaler of this product");
         products[productId].status = Status.Wholesaled; // update product status
         emit returnProduct(products[productId]);
     }
 
     // function that adds authorize retailer (run by wholesaler)
-    function addRetailer(uint256 productId, uint256 retailerId) public isWholesaler(msg.sender) validRetailer(retailerId) validStatus(productId, Status.Wholesaled) {
+    function addRetailer(uint256 productId, uint256 retailerId) public validProductId(productId) isWholesaler(msg.sender) validRetailer(retailerId) validStatus(productId, Status.Wholesaled) {
         require(wholesalerContract.checkWholesaler(products[productId].wholesalerId)==msg.sender, "You are not the wholesaler of this product");
         products[productId].retailerId = retailerId; // update retailer id
         emit returnProduct(products[productId]);
     }
 
     // function that is called after retailer receive the product (run by retailer)
-    function receivedByRetailer(uint256 productId, uint256 price) public isRetailer(msg.sender) validStatus(productId, Status.Wholesaled) {
+    function receivedByRetailer(uint256 productId, uint256 price) public validProductId(productId) isRetailer(msg.sender) validStatus(productId, Status.Wholesaled) {
         require(retailerContract.checkRetailer(products[productId].retailerId)==msg.sender, "You are not the retailer of this product");
         require(price>0, "Price of the product should be greater than 0");
         products[productId].price = price; // update price
@@ -151,7 +143,7 @@ contract Product {
     }
 
     // function that indicates customer purchase (run by retailer)
-    function purchasedByCustomer(uint productId, address customer) public isRetailer(msg.sender) validStatus(productId, Status.Retailed) {
+    function purchasedByCustomer(uint productId, address customer) public validProductId(productId) isRetailer(msg.sender) validStatus(productId, Status.Retailed) {
         require(retailerContract.checkRetailer(products[productId].retailerId) == msg.sender, "You are not the retailer of this product");
         products[productId].status = Status.Sold; // update product status
         products[productId].customer = customer; // add customer
@@ -159,9 +151,9 @@ contract Product {
     }
 
     // function for customer to purchase from retailer (run by customer)
-    function purchasedByToken(uint productId) public validStatus(productId, Status.Retailed) {
+    function purchasedByToken(uint productId) public validProductId(productId) validStatus(productId, Status.Retailed) {
         // deduct the token amount from the customer's account
-        productTokenContract.transferCredit(address(this), products[productId].price);
+        productTokenContract.transferCredit(retailerContract.checkRetailer(products[productId].retailerId), products[productId].price);
         // update the status of the purchased product to "Sold"
         products[productId].status = Status.Sold;
         products[productId].customer = msg.sender;
@@ -169,16 +161,19 @@ contract Product {
     }
     
     // function to report stolen case
-    function reportStolen(uint productId) public validStatus(productId, Status.Sold) {
-        require(products[productId].status != Status.Stolen, "The product has already been reported as stolen.");
-        require(products[productId].status != Status.Counterfeit, "The product has been reported as counterfeit.");
-        //require(products[productId].customer == msg.sender, "You are not the owner of this product");
-        if (products[productId].status == Status.Sold) {
-            require((products[productId].customer == msg.sender) 
-            || 
-            (retailerContract.checkRetailer(products[productId].retailerId) == msg.sender), 
-            "Need to be reported by the customer / retailer.");
+    function reportStolen(uint productId) public validProductId(productId) {
+        productObj memory product = products[productId];
+        bool validReport = false;
+        if ((product.status == Status.Manufactured)&&(manufacturerContract.checkManufacturer(product.manufacturerId) == msg.sender)) {
+            validReport = true; // report by manufacturer
+        } else if (((product.status == Status.Manufactured)||(product.status == Status.Wholesaled))&&(wholesalerContract.checkWholesaler(product.wholesalerId) == msg.sender)){
+            validReport = true; // report by wholesaler
+        } else if (((product.status == Status.Wholesaled)||(product.status == Status.Retailed))&&(retailerContract.checkRetailer(product.retailerId) == msg.sender)) {
+            validReport = true; // report by retailer
+        } else if ((product.status == Status.Sold)&&(product.customer == msg.sender)) {
+            validReport = true; // report by customer
         }
+        require(validReport, "The report is invalid");
         products[productId].status = Status.Stolen; // update product status
         emit returnProduct(products[productId]);
     }
