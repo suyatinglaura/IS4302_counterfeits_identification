@@ -128,8 +128,8 @@ contract Product {
     }
 
     // function that is called after wholesaler receive the product (run by wholesaler)
-    function receivedByWholesaler(uint256 productId) public isWholesaler(msg.sender) validStatus(productId, Status.Wholesaled) {
-        require(wholesalerContract.checkWholesaler(products[productId].retailerId)==msg.sender, "You are not the wholesaler of this product");
+    function receivedByWholesaler(uint256 productId) public isWholesaler(msg.sender) validStatus(productId, Status.Manufactured) {
+        require(wholesalerContract.checkWholesaler(products[productId].wholesalerId)==msg.sender, "You are not the wholesaler of this product");
         products[productId].status = Status.Wholesaled; // update product status
         emit returnProduct(products[productId]);
     }
