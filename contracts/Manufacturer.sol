@@ -21,7 +21,7 @@ contract Manufacturer {
     function registerAsManufacturer() public returns(uint256) {
         // one address is allowed to register once
         require(manufacturersList[msg.sender]==false, "You are already a manufacturer");
-        
+
         // transfer the commitment fee before registering as a manufacturer
         productTokenContract.transferCredit(address(this), commitmentFee);
         // assign an ID to the manufacturer
@@ -50,7 +50,7 @@ contract Manufacturer {
         totalReport[manufacturerId]+=1;
         // force exit when number of negative reports exceeds the limits
         if (totalReport[manufacturerId] > posReport[manufacturerId]*limit) {
-            forceExit(manufacturerId);
+            this.forceExit(manufacturerId);
         }
     }
 

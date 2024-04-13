@@ -73,10 +73,23 @@ contract("Manufacturer", function (accounts) {
         await ManufacturerInstance.selfExit(1, {from: accounts[1]});
         // test that the Manufacturer no longer exists
         assert.strictEqual(await ManufacturerInstance.manufacturerExists(accounts[1]), false, "Manufacturer is not successfully removed");
-        // test that the Manufacturer id is 1
+        // test that the Manufacturer id no longer
         assert.equal(await ManufacturerInstance.checkManufacturer(1), 0, "Manufacturer is not successfully removed");
         // test that commitment fee is refunded
         assert.equal(await PCTokenInstance.checkCredit({from: accounts[1]}), 100, "Commitment fee is not successfully refunded");
+    });
+
+    it("Report Authenticity and Force Exit", async() => {
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[1], value: oneEth});
+        // register a Manufacturer
+        await ManufacturerInstance.registerAsManufacturer({from: accounts[1]});
+        // report authenticity from Account 2
+        await ManufacturerInstance.reportAuthenticity(1, false, {from: accounts[2]});
+        // test that the Manufacturer no longer exists
+        assert.strictEqual(await ManufacturerInstance.manufacturerExists(accounts[1]), false, "Manufacturer is not successfully removed");
+        // test that the Manufacturer id no longer
+        assert.equal(await ManufacturerInstance.checkManufacturer(1), 0, "Manufacturer is not successfully removed");
     });
 
 });
