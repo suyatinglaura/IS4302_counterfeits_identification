@@ -40,4 +40,16 @@ contract PCToken {
         // Transfers from tx.origin to receipient
         erc20Contract.transfer(recipient, amt);
     }
+    
+    /**
+    * @dev Function to transfer the credit from the owner to the recipient
+    * @param sender address of the sender that will pay in PCT
+    * @param recipient address of the recipient that will gain in PCT
+    * @param amt uint256 aount of PCT to transfer
+    */
+    function transferCreditFrom(address sender, address recipient, uint256 amt) public {
+        require(msg.sender==sender, "You are not allowed to transfer credit on other's behalf");
+        // Transfers from sender to receipient
+        erc20Contract.transferFrom(sender, recipient, amt);
+    }
 }
