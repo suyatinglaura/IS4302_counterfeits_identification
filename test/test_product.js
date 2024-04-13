@@ -156,6 +156,24 @@ contract("Product", function (accounts) {
         assert.equal(product.id, emittedEvent.args['0']['id'], "Incorrect check product ID from Retailer address");
     });
 
+    it("Check Product by Customer", async () => {
+        await ManufacturerInstance.registerAsManufacturer({from: accounts[3], value: oneEth});
+        await WholesalerInstance.registerAsWholesaler({from: accounts[4], value: oneEth});
+        await RetailerInstance.registerAsRetailer({from: accounts[5], value: oneEth});
+        await ProductInstance.addProduct(1, {from: accounts[3]});
+        await ProductInstance.addWholesaler(1, 1, {from: accounts[3]});
+        await ProductInstance.receivedByWholesaler(1, {from: accounts[4]});
+        await ProductInstance.addRetailer(1, 1, {from: accounts[4]});
+        await ProductInstance.receivedByRetailer(1, 1, {from: accounts[5]});
+        
+        let result = await ProductInstance.purchasedByCustomer(1, accounts[6], {from: accounts[5]});
+        let emittedEvent = result.logs[0];
+        let product = await ProductInstance.checkProduct(1, {from:accounts[6]});
+
+        assert.equal(product.id, emittedEvent.args['0']['id'], "Incorrect check product ID from Customer address");
+        // need to check the balance change
+    });
+
 
     // test retailerExists with unregistered retailer 
     it("Should return false if retailer does not exist", async () => {
