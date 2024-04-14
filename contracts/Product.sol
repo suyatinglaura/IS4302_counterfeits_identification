@@ -93,8 +93,8 @@ contract Product is ProductInterface {
         _;
     }
 
-    // check product information
-    function checkProduct(uint256 productId) view public returns (productObj memory) {
+    // check product information (run by all users)
+    function checkProduct(uint256 productId) public view returns (productObj memory) {
         return products[productId];
     }
 
@@ -109,59 +109,54 @@ contract Product is ProductInterface {
         newProduct.id = newProductId;
         // add the product to the mapping
         products[newProductId] = newProduct;
-        emit returnProduct(newProduct);
         return newProductId;
     }
 
-    // function that authorizes wholesaler (run by manufacturer)
+    // authorize wholesaler (run by manufacturer)
     function addWholesaler(uint256 productId, uint256 wholesalerId) public validProductId(productId) isManufacturer(msg.sender) validWholesaler(wholesalerId) validStatus(productId, Status.Manufactured) {
         require(manufacturerContract.checkId(products[productId].manufacturerId)==msg.sender, "You are not the manufacturer of this product");
         products[productId].wholesalerId = wholesalerId; // update wholesaler id
-        emit returnProduct(products[productId]);
     }
 
-    // function that is called after wholesaler receive the product (run by wholesaler)
-     function receivedByWholesaler(uint256 productId) public validProductId(productId) isWholesaler(msg.sender) validStatus(productId, Status.Manufactured) {
+    // wholesaler receive the product (run by wholesaler)
+     function receivedByWholesaler(uint256 productId, bool pos) public validProductId(productId) isWholesaler(msg.sender) validStatus(productId, Status.Manufactured) {
         require(wholesalerContract.checkId(products[productId].wholesalerId)==msg.sender, "You are not the wholesaler of this product");
+        manufacturerContract.reportAuthenticity(products[productId].manufacturerId, pos); // wholesaler reports whether the manufacturer is authentic
         products[productId].status = Status.Wholesaled; // update product status
-        emit returnProduct(products[productId]);
     }
 
-    // function that adds authorize retailer (run by wholesaler)
+    // authorize retailer (run by wholesaler)
     function addRetailer(uint256 productId, uint256 retailerId) public validProductId(productId) isWholesaler(msg.sender) validRetailer(retailerId) validStatus(productId, Status.Wholesaled) {
         require(wholesalerContract.checkId(products[productId].wholesalerId)==msg.sender, "You are not the wholesaler of this product");
         products[productId].retailerId = retailerId; // update retailer id
-        emit returnProduct(products[productId]);
     }
 
-    // function that is called after retailer receive the product (run by retailer)
-    function receivedByRetailer(uint256 productId, uint256 price) public validProductId(productId) isRetailer(msg.sender) validStatus(productId, Status.Wholesaled) {
+    // retailer receive the product (run by retailer)
+    function receivedByRetailer(uint256 productId, uint256 price, bool pos) public validProductId(productId) isRetailer(msg.sender) validStatus(productId, Status.Wholesaled) {
         require(retailerContract.checkId(products[productId].retailerId)==msg.sender, "You are not the retailer of this product");
         require(price>0, "Price of the product should be greater than 0");
+        wholesalerContract.reportAuthenticity(products[productId].wholesalerId, pos); // retailer reports whether the wholesaler is authentic
         products[productId].price = price; // update price
         products[productId].status = Status.Retailed; // update product status
-        emit returnProduct(products[productId]);
     }
 
-    // function that indicates customer purchase (run by retailer)
+    // customer purchase by cash (run by retailer)
     function purchasedByCustomer(uint productId, address customer) public validProductId(productId) isRetailer(msg.sender) validStatus(productId, Status.Retailed) {
         require(retailerContract.checkId(products[productId].retailerId) == msg.sender, "You are not the retailer of this product");
         products[productId].status = Status.Sold; // update product status
         products[productId].customer = customer; // add customer
-        emit returnProduct(products[productId]);
     }
 
-    // function for customer to purchase from retailer (run by customer)
+    // customer purchase by token (run by customer)
     function purchasedByToken(uint productId) public validProductId(productId) validStatus(productId, Status.Retailed) {
         // deduct the token amount from the customer's account
         productTokenContract.transferCredit(retailerContract.checkId(products[productId].retailerId), products[productId].price);
         // update the status of the purchased product to "Sold"
         products[productId].status = Status.Sold;
         products[productId].customer = msg.sender;
-        emit returnProduct(products[productId]);
     }
     
-    // function to report stolen case
+    // report stolen case (run by all users)
     function reportStolen(uint productId) public validProductId(productId) {
         productObj memory product = products[productId];
         bool validReport = false;
@@ -176,15 +171,14 @@ contract Product is ProductInterface {
         }
         require(validReport, "The report is invalid");
         products[productId].status = Status.Stolen; // update product status
-        emit returnProduct(products[productId]);
     }
     
-    // function to report counterfeit
-    function reportCounterfeit(uint productId) public validStatus(productId, Status.Sold) {
+    // report counterfeit (run by customer)
+    function reportCounterfeit(uint productId) public validProductId(productId) validStatus(productId, Status.Sold) {
         require(products[productId].customer == msg.sender, "You are not the owner of this product");
         // owner of the prduct needs to transfer some deposit to report a counterfeit case
         productTokenContract.transferCredit(address(this), products[productId].price/2);
+        retailerContract.reportAuthenticity(products[productId].retailerId, false); // customer sends a nagative report to the retailer
         products[productId].status = Status.Counterfeit; // update product status
-        emit returnProduct(products[productId]);
     }
 }

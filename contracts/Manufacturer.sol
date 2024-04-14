@@ -22,6 +22,16 @@ contract Manufacturer is User {
         owner = msg.sender;
     }
 
+    // check total number of reports
+    function getTotalReport(uint256 manufacturerId) public view returns(uint256) {
+        return totalReport[manufacturerId];
+    }
+
+    // check number of positive reports
+    function getPosReport(uint256 manufacturerId) public view returns(uint256) {
+        return posReport[manufacturerId];
+    }
+
     // set product attached to the contract
     function setProduct(ProductInterface _productContract) public {
         // this function can only be called by the owner
