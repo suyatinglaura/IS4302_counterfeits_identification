@@ -1,8 +1,12 @@
 pragma solidity ^0.5.0;
 import "./PCToken.sol";
+import "./User.sol";
+import "./ProductInterface.sol";
 
-contract Manufacturer {
+contract Manufacturer is User {
     PCToken productTokenContract; // PCToken attached to it
+    ProductInterface productContract; // Product attached to it
+    
     address owner; // owner of the contract
     uint256 numManufacturers = 0;
     uint256 commitmentFee = 100;
@@ -12,13 +16,21 @@ contract Manufacturer {
     mapping (uint256 => uint256) totalReport; // keep track of the total number of reports for each manufacturer
     mapping (uint256 => uint256) posReport; // keep track of the number of positive reports for each manufacturer
 
-    constructor(PCToken productTokenAddress) public {
-        productTokenContract = productTokenAddress;
+    constructor(PCToken productTokenInstance) public {
+        productTokenContract = productTokenInstance;
         owner = msg.sender;
     }
 
-    // User register as a manufacturer
-    function registerAsManufacturer() public returns(uint256) {
+    // set product attached to the contract
+    function setProduct(ProductInterface _productContract) public {
+        // this function can only be called by the owner
+        require(msg.sender==owner, "You are not the owner of this contract");
+        // set product contract
+        productContract = _productContract;
+    }
+
+    // user register as a manufacturer
+    function register() public returns(uint256) {
         // one address is allowed to register once
         require(manufacturersList[msg.sender]==false, "You are already a manufacturer");
 
@@ -28,21 +40,24 @@ contract Manufacturer {
         uint256 newManufacturerId = ++numManufacturers;
         manufacturers[newManufacturerId] = msg.sender;
         manufacturersList[msg.sender] = true;
-        return newManufacturerId;   
+        return newManufacturerId;  
     }
 
-    // Checks manufacturer information
-    function checkManufacturer(uint256 manufacturerId) public view returns(address) {
+    // check manufacturer information
+    function checkId(uint256 manufacturerId) public view returns(address) {
         return manufacturers[manufacturerId];   
     }
 
-    // Checks manufacturer existence
-    function manufacturerExists(address manufacturer) public view returns(bool) {
+    // check manufacturer existence
+    function doesExist(address manufacturer) public view returns(bool) {
         return manufacturersList[manufacturer];
     }
 
-    // Receives report from wholesalers
+    // receives report from wholesalers
     function reportAuthenticity(uint256 manufacturerId, bool pos) public {
+        // this function can only be called by Product Contract
+        require(msg.sender==address(productContract), "Report can only be sent from Product Contract");
+        
         // update number of postive reports and total number of reports
         if (pos) {
             posReport[manufacturerId]+=1;
@@ -54,10 +69,11 @@ contract Manufacturer {
         }
     }
 
-    // manufacturer is forced to exited if they received too many negative reports
+    // manufacturer is forced to exit if they received too many negative reports
     function forceExit(uint256 manufacturerId) public {
         // this function can only be called by the contract
         require(msg.sender==address(this), "You are not allow to execute force exit");
+        
         // retrieve the address of the manufacturer
         address manufacturerAdd = manufacturers[manufacturerId];
         // clear records for the provided manufacturer
@@ -71,7 +87,9 @@ contract Manufacturer {
     function selfExit(uint256 manufacturerId) public {
         // retrieve the address of the manufacturer
         address manufacturerAdd = manufacturers[manufacturerId];
+        // this function can only be called by manufacturers themselves
         require(msg.sender==manufacturerAdd, "You are not allowed to execute self exit on other's behalf");
+        
         // refund the manufacturer
         if (totalReport[manufacturerId]>0) {
             productTokenContract.transferCreditFrom(address(this), msg.sender, commitmentFee*totalReport[manufacturerId]/posReport[manufacturerId]);

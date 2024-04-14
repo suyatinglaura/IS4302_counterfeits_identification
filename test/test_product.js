@@ -51,45 +51,50 @@ contract("Manufacturer", function (accounts) {
         // create contract instances
         PCTokenInstance = await PCToken.new();
         ManufacturerInstance = await Manufacturer.new(PCTokenInstance.address);
+        WholesalerInstance = await Wholesaler.new();
+        RetailerInstance = await Retailer.new();
+        ProductInstance = await Product.new(ManufacturerInstance.address, WholesalerInstance.address, RetailerInstance.address, PCTokenInstance.address);
+    });
+
+    it("Set Product", async() => {
+        // set product from non-owner account
+        await truffleAssert.reverts(ManufacturerInstance.setProduct(ProductInstance.address, {from: accounts[1]}), "You are not the owner of this contract");
+        await ManufacturerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
     });
 
     it("Register as Manufacturer", async() => {
         // get 100 tokens
         await PCTokenInstance.getCredit({from: accounts[1], value: oneEth});
         // register a Manufacturer
-        await ManufacturerInstance.registerAsManufacturer({from: accounts[1]});
+        await ManufacturerInstance.register({from: accounts[1]});
         // test that the Manufacturer exists
-        assert.strictEqual(await ManufacturerInstance.manufacturerExists(accounts[1]), true, "Manufacturer is not successfully registered");
+        assert.strictEqual(await ManufacturerInstance.doesExist(accounts[1]), true, "Manufacturer is not successfully registered");
         // test that the Manufacturer id is 1
-        assert.strictEqual(await ManufacturerInstance.checkManufacturer(1), accounts[1], "Manufacturer is not successfully registered");
+        assert.strictEqual(await ManufacturerInstance.checkId(1), accounts[1], "Manufacturer is not successfully registered");
     });
 
     it("Self Exit", async() => {
         // get 100 tokens
         await PCTokenInstance.getCredit({from: accounts[1], value: oneEth});
         // register a Manufacturer
-        await ManufacturerInstance.registerAsManufacturer({from: accounts[1]});
+        await ManufacturerInstance.register({from: accounts[1]});
         // Manufacturer 1 exits
         await ManufacturerInstance.selfExit(1, {from: accounts[1]});
         // test that the Manufacturer no longer exists
-        assert.strictEqual(await ManufacturerInstance.manufacturerExists(accounts[1]), false, "Manufacturer is not successfully removed");
+        assert.strictEqual(await ManufacturerInstance.doesExist(accounts[1]), false, "Manufacturer is not successfully removed");
         // test that the Manufacturer id no longer
-        assert.equal(await ManufacturerInstance.checkManufacturer(1), 0, "Manufacturer is not successfully removed");
+        assert.equal(await ManufacturerInstance.checkId(1), 0, "Manufacturer is not successfully removed");
         // test that commitment fee is refunded
         assert.equal(await PCTokenInstance.checkCredit({from: accounts[1]}), 100, "Commitment fee is not successfully refunded");
     });
 
-    it("Report Authenticity and Force Exit", async() => {
+    it("Report Authenticity can only be called by Product Contract", async() => {
         // get 100 tokens
         await PCTokenInstance.getCredit({from: accounts[1], value: oneEth});
         // register a Manufacturer
-        await ManufacturerInstance.registerAsManufacturer({from: accounts[1]});
-        // report authenticity from Account 2
-        await ManufacturerInstance.reportAuthenticity(1, false, {from: accounts[2]});
-        // test that the Manufacturer no longer exists
-        assert.strictEqual(await ManufacturerInstance.manufacturerExists(accounts[1]), false, "Manufacturer is not successfully removed");
-        // test that the Manufacturer id no longer
-        assert.equal(await ManufacturerInstance.checkManufacturer(1), 0, "Manufacturer is not successfully removed");
+        await ManufacturerInstance.register({from: accounts[1]});
+        // report authenticity from Account 2 is not allowed
+        await truffleAssert.reverts(ManufacturerInstance.reportAuthenticity(1, false, {from: accounts[2]}), "Report can only be sent from Product Contract");
     });
 
 });

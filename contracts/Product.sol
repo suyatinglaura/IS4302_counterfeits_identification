@@ -4,9 +4,10 @@ import "./PCToken.sol";
 import "./Manufacturer.sol";
 import "./Wholesaler.sol";
 import "./Retailer.sol";
+import "./ProductInterface.sol";
 
 // Product contract serves as a product pool, where it stores the product information, and operations related to products
-contract Product {
+contract Product is ProductInterface {
     enum Status {Manufactured, Wholesaled, Retailed, Sold, Stolen, Counterfeit} // possible status of a product
     
     Manufacturer manufacturerContract;
@@ -40,7 +41,7 @@ contract Product {
 
     // check msg.sender is a manufacturer
     modifier isManufacturer(address manufacturer) {
-        require(manufacturerContract.manufacturerExists(manufacturer), "You are not a manufacturer");
+        require(manufacturerContract.doesExist(manufacturer), "You are not a manufacturer");
         _;
     }
 
@@ -58,7 +59,7 @@ contract Product {
 
     // check the id and address of the provided manufacturer match
     modifier validManufacturer(uint256 manufacturerId, address manufacturer) {
-        require(manufacturerContract.checkManufacturer(manufacturerId) == manufacturer, "Please provide a valid manufacturer ID");
+        require(manufacturerContract.checkId(manufacturerId) == manufacturer, "Please provide a valid manufacturer ID");
         _;
     }
 
@@ -114,7 +115,7 @@ contract Product {
 
     // function that authorizes wholesaler (run by manufacturer)
     function addWholesaler(uint256 productId, uint256 wholesalerId) public validProductId(productId) isManufacturer(msg.sender) validWholesaler(wholesalerId) validStatus(productId, Status.Manufactured) {
-        require(manufacturerContract.checkManufacturer(products[productId].manufacturerId)==msg.sender, "You are not the manufacturer of this product");
+        require(manufacturerContract.checkId(products[productId].manufacturerId)==msg.sender, "You are not the manufacturer of this product");
         products[productId].wholesalerId = wholesalerId; // update wholesaler id
         emit returnProduct(products[productId]);
     }
@@ -164,7 +165,7 @@ contract Product {
     function reportStolen(uint productId) public validProductId(productId) {
         productObj memory product = products[productId];
         bool validReport = false;
-        if ((product.status == Status.Manufactured)&&(manufacturerContract.checkManufacturer(product.manufacturerId) == msg.sender)) {
+        if ((product.status == Status.Manufactured)&&(manufacturerContract.checkId(product.manufacturerId) == msg.sender)) {
             validReport = true; // report by manufacturer
         } else if (((product.status == Status.Manufactured)||(product.status == Status.Wholesaled))&&(wholesalerContract.checkWholesaler(product.wholesalerId) == msg.sender)){
             validReport = true; // report by wholesaler
