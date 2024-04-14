@@ -3,6 +3,7 @@ import "./PCToken.sol";
 import "./User.sol";
 import "./ProductInterface.sol";
 
+// Manufacturer contract serves as a manufacturer pool, where it stores the manufacturer information
 contract Manufacturer is User {
     PCToken productTokenContract; // PCToken attached to it
     ProductInterface productContract; // Product attached to it
@@ -53,7 +54,7 @@ contract Manufacturer is User {
         return manufacturersList[manufacturer];
     }
 
-    // receives report from wholesalers
+    // receive report from wholesalers
     function reportAuthenticity(uint256 manufacturerId, bool pos) public {
         // this function can only be called by Product Contract
         require(msg.sender==address(productContract), "Report can only be sent from Product Contract");

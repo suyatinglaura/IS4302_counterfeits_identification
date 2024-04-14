@@ -47,13 +47,13 @@ contract Product is ProductInterface {
 
     // check msg.sender is a wholesaler
     modifier isWholesaler(address wholesaler) {
-        require(wholesalerContract.wholesalerExists(wholesaler), "You are not a wholesaler");
+        require(wholesalerContract.doesExist(wholesaler), "You are not a wholesaler");
         _;
     }
 
     // check msg.sender is a retailer
     modifier isRetailer(address retailer) {
-        require(retailerContract.retailerExists(retailer), "You are not a retailer");
+        require(retailerContract.doesExist(retailer), "You are not a retailer");
         _;
     }
 
@@ -65,29 +65,29 @@ contract Product is ProductInterface {
 
     // check the provided wholesaler is valid
     modifier validWholesaler(uint wholesalerId) {
-        require(wholesalerContract.checkWholesaler(wholesalerId) != address(0), "Please provide a valid wholesaler ID");
+        require(wholesalerContract.checkId(wholesalerId) != address(0), "Please provide a valid wholesaler ID");
         _;
     }
 
     // check the provided retailer is valid
     modifier validRetailer(uint retailerId) {
-        require(retailerContract.checkRetailer(retailerId) != address(0), "Please provide a valid retailer ID");
+        require(retailerContract.checkId(retailerId) != address(0), "Please provide a valid retailer ID");
         _;
     }
 
-    // check the product status
+    // check the product status matches the expected status
     modifier validStatus(uint productId, Status expectedStatus) {
         require(products[productId].status == expectedStatus, "You are not supposed to perform this operation at the current stage");
         _;
     }
     
-    // checkOwner
-    modifier ownerOnly(uint256 productId) {
-        require(products[productId].customer == msg.sender);
-        _;
-    }
+    // // checkOwner
+    // modifier ownerOnly(uint256 productId) {
+    //     require(products[productId].customer == msg.sender);
+    //     _;
+    // }
 
-    // check valid id
+    // check product id is valid
      modifier validProductId(uint256 productId) {
         require((productId >0)&&(productId <= numProducts), "Please provide a valid product ID");
         _;
@@ -98,7 +98,7 @@ contract Product is ProductInterface {
         return products[productId];
     }
 
-    // function that adds new product (run by manufacturer)
+    // add new product (run by manufacturer)
     function addProduct(uint256 _manufacturerId) public validManufacturer(_manufacturerId, msg.sender) returns (uint256) {
         // create a new product object with default values
         productObj memory newProduct;
@@ -122,21 +122,21 @@ contract Product is ProductInterface {
 
     // function that is called after wholesaler receive the product (run by wholesaler)
      function receivedByWholesaler(uint256 productId) public validProductId(productId) isWholesaler(msg.sender) validStatus(productId, Status.Manufactured) {
-        require(wholesalerContract.checkWholesaler(products[productId].wholesalerId)==msg.sender, "You are not the wholesaler of this product");
+        require(wholesalerContract.checkId(products[productId].wholesalerId)==msg.sender, "You are not the wholesaler of this product");
         products[productId].status = Status.Wholesaled; // update product status
         emit returnProduct(products[productId]);
     }
 
     // function that adds authorize retailer (run by wholesaler)
     function addRetailer(uint256 productId, uint256 retailerId) public validProductId(productId) isWholesaler(msg.sender) validRetailer(retailerId) validStatus(productId, Status.Wholesaled) {
-        require(wholesalerContract.checkWholesaler(products[productId].wholesalerId)==msg.sender, "You are not the wholesaler of this product");
+        require(wholesalerContract.checkId(products[productId].wholesalerId)==msg.sender, "You are not the wholesaler of this product");
         products[productId].retailerId = retailerId; // update retailer id
         emit returnProduct(products[productId]);
     }
 
     // function that is called after retailer receive the product (run by retailer)
     function receivedByRetailer(uint256 productId, uint256 price) public validProductId(productId) isRetailer(msg.sender) validStatus(productId, Status.Wholesaled) {
-        require(retailerContract.checkRetailer(products[productId].retailerId)==msg.sender, "You are not the retailer of this product");
+        require(retailerContract.checkId(products[productId].retailerId)==msg.sender, "You are not the retailer of this product");
         require(price>0, "Price of the product should be greater than 0");
         products[productId].price = price; // update price
         products[productId].status = Status.Retailed; // update product status
@@ -145,7 +145,7 @@ contract Product is ProductInterface {
 
     // function that indicates customer purchase (run by retailer)
     function purchasedByCustomer(uint productId, address customer) public validProductId(productId) isRetailer(msg.sender) validStatus(productId, Status.Retailed) {
-        require(retailerContract.checkRetailer(products[productId].retailerId) == msg.sender, "You are not the retailer of this product");
+        require(retailerContract.checkId(products[productId].retailerId) == msg.sender, "You are not the retailer of this product");
         products[productId].status = Status.Sold; // update product status
         products[productId].customer = customer; // add customer
         emit returnProduct(products[productId]);
@@ -154,7 +154,7 @@ contract Product is ProductInterface {
     // function for customer to purchase from retailer (run by customer)
     function purchasedByToken(uint productId) public validProductId(productId) validStatus(productId, Status.Retailed) {
         // deduct the token amount from the customer's account
-        productTokenContract.transferCredit(retailerContract.checkRetailer(products[productId].retailerId), products[productId].price);
+        productTokenContract.transferCredit(retailerContract.checkId(products[productId].retailerId), products[productId].price);
         // update the status of the purchased product to "Sold"
         products[productId].status = Status.Sold;
         products[productId].customer = msg.sender;
@@ -167,9 +167,9 @@ contract Product is ProductInterface {
         bool validReport = false;
         if ((product.status == Status.Manufactured)&&(manufacturerContract.checkId(product.manufacturerId) == msg.sender)) {
             validReport = true; // report by manufacturer
-        } else if (((product.status == Status.Manufactured)||(product.status == Status.Wholesaled))&&(wholesalerContract.checkWholesaler(product.wholesalerId) == msg.sender)){
+        } else if (((product.status == Status.Manufactured)||(product.status == Status.Wholesaled))&&(wholesalerContract.checkId(product.wholesalerId) == msg.sender)){
             validReport = true; // report by wholesaler
-        } else if (((product.status == Status.Wholesaled)||(product.status == Status.Retailed))&&(retailerContract.checkRetailer(product.retailerId) == msg.sender)) {
+        } else if (((product.status == Status.Wholesaled)||(product.status == Status.Retailed))&&(retailerContract.checkId(product.retailerId) == msg.sender)) {
             validReport = true; // report by retailer
         } else if ((product.status == Status.Sold)&&(product.customer == msg.sender)) {
             validReport = true; // report by customer
