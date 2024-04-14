@@ -9,8 +9,8 @@ module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
     await deployer.deploy(PCToken);
     await deployer.deploy(Manufacturer, PCToken.address);
-    await deployer.deploy(Wholesaler);
-    await deployer.deploy(Retailer);
+    await deployer.deploy(Wholesaler, PCToken.address);
+    await deployer.deploy(Retailer, PCToken.address);
     await deployer.deploy(Product, Manufacturer.address, Wholesaler.address, Retailer.address, PCToken.address);
   });
 };
