@@ -73,6 +73,8 @@ contract("Manufacturer", function (accounts) {
         assert.strictEqual(await ManufacturerInstance.doesExist(accounts[3]), true, "Manufacturer is not successfully registered");
         // test that the Manufacturer id is 1
         assert.strictEqual(await ManufacturerInstance.checkId(1), accounts[3], "Manufacturer is not successfully registered");
+        // check balance of Account 3
+        assert.equal(await PCTokenInstance.checkCredit({from: accounts[3]}), 0, "Commitment fee is not successfully paid");
     });
 
     it("Register as Manufacturer with Insufficient PCTokens", async() => {
@@ -134,6 +136,8 @@ contract("Wholesaler", function (accounts) {
         assert.strictEqual(await WholesalerInstance.doesExist(accounts[4]), true, "Wholesaler is not successfully registered");
         // test that the Wholesaler id is 1
         assert.strictEqual(await WholesalerInstance.checkId(1), accounts[4], "Wholesaler is not successfully registered");
+        // check balance of Account 4
+        assert.equal(await PCTokenInstance.checkCredit({from: accounts[4]}), 0, "Commitment fee is not successfully paid");
     });
 
     it("Register as Wholesaler with Insufficient PCTokens", async() => {
@@ -195,15 +199,41 @@ contract("Retailer", function (accounts) {
         assert.strictEqual(await RetailerInstance.doesExist(accounts[5]), true, "Retailer is not successfully registered");
         // test that the Retailer id is 1
         assert.strictEqual(await RetailerInstance.checkId(1), accounts[5], "Retailer is not successfully registered");
+        // check balance of Account 5
+        assert.equal(await PCTokenInstance.checkCredit({from: accounts[5]}), 0, "Commitment fee is not successfully paid");
     });
 
     it("Register as Retailer with Insufficient PCTokens", async() => {
         // attempt to register a Retailer with insufficient PCToken balance
         await truffleAssert.reverts(RetailerInstance.register({from: accounts[5]}), "msg.sender doesn't have enough balance");
     });
+
+    it("Self Exit", async() => {
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[5], value: oneEth});
+        // register a Retailer
+        await RetailerInstance.register({from: accounts[5]});
+        // Retailer 1 exits
+        await RetailerInstance.selfExit(1, {from: accounts[5]});
+        // test that the Retailer no longer exists
+        assert.strictEqual(await RetailerInstance.doesExist(accounts[5]), false, "Retailer is not successfully removed");
+        // test that the Retailer id no longer
+        assert.equal(await RetailerInstance.checkId(1), 0, "Retailer is not successfully removed");
+        // test that commitment fee is refunded
+        assert.equal(await PCTokenInstance.checkCredit({from: accounts[5]}), 100, "Commitment fee is not successfully refunded");
+    });
+
+    it("Report Authenticity can only be called by Product Contract", async() => {
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[5], value: oneEth});
+        // register a Retailer
+        await RetailerInstance.register({from: accounts[5]});
+        // report authenticity from Account 4 is not allowed
+        await truffleAssert.reverts(RetailerInstance.reportAuthenticity(1, false, {from: accounts[6]}), "Report can only be sent from Product Contract");
+    });
 });
 
-contract("Product", function (accounts) {
+contract("Product - Transition of Product Lifecycle", function (accounts) {
     // resets the contracts after each test case
     beforeEach(async () => {
         // create contract instances
@@ -214,7 +244,7 @@ contract("Product", function (accounts) {
         ProductInstance = await Product.new(ManufacturerInstance.address, WholesalerInstance.address, RetailerInstance.address, PCTokenInstance.address);
     });
 
-    console.log("Testing Product contract");
+    console.log("Testing Transition of Product Lifecycle");
 
     it("Add Product", async() => {
         // get 100 tokens
@@ -307,6 +337,72 @@ contract("Product", function (accounts) {
         assert.equal(await ManufacturerInstance.getPosReport(1), 1, "Authenticity report is not successfully sent");
     });
 
+    it("Unauthorized Wholesaler cannot alter Product", async() => {
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
+        // register a Manufacturer
+        await ManufacturerInstance.register({from: accounts[6]});
+        // set product from Manufacturer owner account
+        await ManufacturerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[7], value: oneEth});
+        // register a Wholesaler
+        await WholesalerInstance.register({from: accounts[7]});
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[8], value: oneEth});
+        // register another Wholesaler
+        await WholesalerInstance.register({from: accounts[8]});
+        // add Product from Manufacturer 1
+        await ProductInstance.addProduct(1, {from: accounts[6]});
+        // add Wholesaler from Manufacturer 1
+        await ProductInstance.addWholesaler(1, 1, {from: accounts[6]});
+        
+        // Wholesaler 2 attempts to alter the product
+        await truffleAssert.reverts(ProductInstance.receivedByWholesaler(1, true, {from: accounts[8]}), "You are not the wholesaler of this product");
+    });
+
+    it("Manufacturer self-exit", async() => {
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
+        // register a Manufacturer
+        await ManufacturerInstance.register({from: accounts[6]});
+        // set product from Manufacturer owner account
+        await ManufacturerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[7], value: oneEth});
+        // register a Wholesaler
+        await WholesalerInstance.register({from: accounts[7]});
+        // add Product 1 from Manufacturer 1
+        await ProductInstance.addProduct(1, {from: accounts[6]});
+        // add Wholesaler from Manufacturer 1
+        await ProductInstance.addWholesaler(1, 1, {from: accounts[6]});
+        // Wholesaler 1 issues a positive report to Manufacturer 1
+        await ProductInstance.receivedByWholesaler(1, true, {from: accounts[7]});
+
+        // add Product 2 from Manufacturer 1
+        await ProductInstance.addProduct(1, {from: accounts[6]});
+        // add Wholesaler from Manufacturer 1
+        await ProductInstance.addWholesaler(2, 1, {from: accounts[6]});
+        // Wholesaler 1 issues a positive report to Manufacturer 1
+        await ProductInstance.receivedByWholesaler(2, true, {from: accounts[7]});
+
+        // add Product 3 from Manufacturer 1
+        await ProductInstance.addProduct(1, {from: accounts[6]});
+        // add Wholesaler from Manufacturer 1
+        await ProductInstance.addWholesaler(3, 1, {from: accounts[6]});
+        // Wholesaler 1 issues a negative report to Manufacturer 1
+        await ProductInstance.receivedByWholesaler(3, false, {from: accounts[7]});
+
+        // Manufacturer 1 exits
+        await ManufacturerInstance.selfExit(1, {from: accounts[6]});
+        // test that the Manufacturer no longer exists
+        assert.strictEqual(await ManufacturerInstance.doesExist(accounts[6]), false, "Manufacturer is not successfully removed");
+        // test that the Manufacturer id no longer
+        assert.equal(await ManufacturerInstance.checkId(1), 0, "Manufacturer is not successfully removed");
+        // test that commitment fee is refunded
+        assert.equal(await PCTokenInstance.checkCredit({from: accounts[6]}), 66, "Commitment fee is not successfully refunded");
+    });
+
     it("Add Retailer", async() => {
         // get 100 tokens
         await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
@@ -333,6 +429,32 @@ contract("Product", function (accounts) {
         await ProductInstance.addRetailer(1, 1, {from: accounts[7]});
         let product = await ProductInstance.checkProduct(1, {from: accounts[9]});
         assert.equal(product.retailerId, 1, "Retailer is not successfully added");
+    });
+
+    it("Unable to add non-existent Retailer", async() => {
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
+        // register a Manufacturer
+        await ManufacturerInstance.register({from: accounts[6]});
+        // set product from Manufacturer owner account
+        await ManufacturerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[7], value: oneEth});
+        // register a Wholesaler
+        await WholesalerInstance.register({from: accounts[7]});
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[8], value: oneEth});
+        // register a Retailer
+        await RetailerInstance.register({from: accounts[8]});
+        // add Product from Manufacturer 1
+        await ProductInstance.addProduct(1, {from: accounts[6]});
+        // add Wholesaler from Manufacturer 1
+        await ProductInstance.addWholesaler(1, 1, {from: accounts[6]});
+        // product received by Wholesaler 1
+        await ProductInstance.receivedByWholesaler(1, true, {from: accounts[7]});
+
+        // add non-existent Retailer 2 from Wholesaler 1
+        await truffleAssert.reverts(ProductInstance.addRetailer(1, 2, {from: accounts[7]}), "Please provide a valid retailer ID");
     });
 
     it("Product Received by Retailer", async() => {
@@ -369,6 +491,89 @@ contract("Product", function (accounts) {
         assert.equal(await WholesalerInstance.getTotalReport(1), 1, "Authenticity report is not successfully sent");
         assert.equal(await WholesalerInstance.getPosReport(1), 1, "Authenticity report is not successfully sent");
     });
+
+    it("Unauthorized Retailer cannot alter Product", async() => {
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
+        // register a Manufacturer
+        await ManufacturerInstance.register({from: accounts[6]});
+        // set product from Manufacturer owner account
+        await ManufacturerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[7], value: oneEth});
+        // register a Wholesaler
+        await WholesalerInstance.register({from: accounts[7]});
+        // set product from Wholesaler owner account
+        await WholesalerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[8], value: oneEth});
+        // register a Retailer
+        await RetailerInstance.register({from: accounts[8]});
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[9], value: oneEth});
+        // register another Retailer
+        await RetailerInstance.register({from: accounts[9]});
+        // add Product from Manufacturer 1
+        await ProductInstance.addProduct(1, {from: accounts[6]});
+        // add Wholesaler from Manufacturer 1
+        await ProductInstance.addWholesaler(1, 1, {from: accounts[6]});
+        // product received by Wholesaler 1
+        await ProductInstance.receivedByWholesaler(1, true, {from: accounts[7]});
+        // add Retailer from Wholesaler 1
+        await ProductInstance.addRetailer(1, 1, {from: accounts[7]});
+
+        // Retailer 2 attempts to alter the product
+        await truffleAssert.reverts(ProductInstance.receivedByRetailer(1, 10, true, {from: accounts[9]}), "You are not the retailer of this product");
+    });
+
+    
+    it("Wholesaler is removed from the market after receiving too many negative reports", async() => {
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
+        // register a Manufacturer
+        await ManufacturerInstance.register({from: accounts[6]});
+        // set product from Manufacturer owner account
+        await ManufacturerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[7], value: oneEth});
+        // register a Wholesaler
+        await WholesalerInstance.register({from: accounts[7]});
+        // set product from Wholesaler owner account
+        await WholesalerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[8], value: oneEth});
+        // register a Retailer
+        await RetailerInstance.register({from: accounts[8]});
+        // add Product from Manufacturer 1
+        await ProductInstance.addProduct(1, {from: accounts[6]});
+        // add Wholesaler from Manufacturer 1
+        await ProductInstance.addWholesaler(1, 1, {from: accounts[6]});
+        // product received by Wholesaler 1
+        await ProductInstance.receivedByWholesaler(1, true, {from: accounts[7]});
+        // add Retailer from Wholesaler 1
+        await ProductInstance.addRetailer(1, 1, {from: accounts[7]});
+
+        // product received by Retailer 1
+        await ProductInstance.receivedByRetailer(1, 10, false, {from: accounts[8]});
+        // test that the account is not associated with any Wholesaler
+        assert.strictEqual(await WholesalerInstance.doesExist(accounts[7]), false, "Whoelsaler is not successfully removed from the market");
+        // test that the Whoelsaler id 1 does not exist
+        assert.equal(await WholesalerInstance.checkId(1), 0, "Whoelsaler is not successfully removed from the market");
+    });
+});
+
+contract("Product - Support for On-chain and Off-chain Business", function (accounts) {
+    // resets the contracts after each test case
+    beforeEach(async () => {
+        // create contract instances
+        PCTokenInstance = await PCToken.new();
+        ManufacturerInstance = await Manufacturer.new(PCTokenInstance.address);
+        WholesalerInstance = await Wholesaler.new(PCTokenInstance.address);
+        RetailerInstance = await Retailer.new(PCTokenInstance.address);
+        ProductInstance = await Product.new(ManufacturerInstance.address, WholesalerInstance.address, RetailerInstance.address, PCTokenInstance.address);
+    });
+
+    console.log("Testing Support for On-chain and Off-chain Business");
 
     it("Purchased by Customer with Cash", async () => {
         // get 100 tokens
@@ -422,6 +627,8 @@ contract("Product", function (accounts) {
         await PCTokenInstance.getCredit({from: accounts[8], value: oneEth});
         // register a Retailer
         await RetailerInstance.register({from: accounts[8]});
+        // set product from Retailer owner account
+        await RetailerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
         // add Product from Manufacturer 1
         await ProductInstance.addProduct(1, {from: accounts[6]});
         // add Wholesaler from Manufacturer 1
@@ -435,8 +642,8 @@ contract("Product", function (accounts) {
         
         // get 10 tokens
         await PCTokenInstance.getCredit({from: accounts[9], value: oneEth/10});
-        // Account 9 purchase the product by cash
-        await ProductInstance.purchasedByToken(1, {from: accounts[9]});
+        // Account 9 purchase the product by token
+        await ProductInstance.purchasedByToken(1, true, {from: accounts[9]});
         let product = await ProductInstance.checkProduct(1, {from: accounts[9]});
         assert.equal(product.status, Product.Status.Sold, "Product is not successfully purchased");
         assert.strictEqual(product.customer, accounts[9], "Product is not successfully purchased");
@@ -444,7 +651,7 @@ contract("Product", function (accounts) {
         assert.equal(await PCTokenInstance.checkCredit({from: accounts[9]}), 0, "Balance is not changed correctly");
     });
 
-    it("Report Counterfeit", async () => {
+    it("No double sale", async () => {
         // get 100 tokens
         await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
         // register a Manufacturer
@@ -473,21 +680,75 @@ contract("Product", function (accounts) {
         await ProductInstance.addRetailer(1, 1, {from: accounts[7]});
         // product received by Retailer 1
         await ProductInstance.receivedByRetailer(1, 10, true, {from: accounts[8]});
-        // Account 9 purchase the product by cash
-        await ProductInstance.purchasedByCustomer(1, accounts[9], {from: accounts[8]});
-        
         // get 10 tokens
         await PCTokenInstance.getCredit({from: accounts[9], value: oneEth/10});
-        // Account 9 reports counterfeit
-        await ProductInstance.reportCounterfeit(1, {from: accounts[9]});
-        let product = await ProductInstance.checkProduct(1, {from: accounts[9]});
-        // test that the Product is of Counterfeit status
-        assert.equal(product.status, Product.Status.Counterfeit, "Product is not successfully reported counterfeit");
-        //check balance
-        assert.equal(await PCTokenInstance.checkCredit({from: accounts[9]}), 5, "Balance is not changed correctly");
+        // Account 9 purchase the product by token
+        await ProductInstance.purchasedByToken(1, true, {from: accounts[9]});
+
+        // get 10 tokens
+        await PCTokenInstance.getCredit({from: accounts[1], value: oneEth/10});
+        // Account 10 attempts to purchase the product again
+        await truffleAssert.reverts(ProductInstance.purchasedByToken(1, true, {from: accounts[1]}), "You are not supposed to perform this operation at the current stage");
+    });
+});
+
+contract("Product - Safeguarding Product Integrity", function (accounts) {
+    // resets the contracts after each test case
+    beforeEach(async () => {
+        // create contract instances
+        PCTokenInstance = await PCToken.new();
+        ManufacturerInstance = await Manufacturer.new(PCTokenInstance.address);
+        WholesalerInstance = await Wholesaler.new(PCTokenInstance.address);
+        RetailerInstance = await Retailer.new(PCTokenInstance.address);
+        ProductInstance = await Product.new(ManufacturerInstance.address, WholesalerInstance.address, RetailerInstance.address, PCTokenInstance.address);
     });
 
-    it("Report Stolen by Wholesaler", async () => {
+    console.log("Testing Safeguarding Product Integrity");
+
+    // it("Report Counterfeit", async () => {
+    //     // get 100 tokens
+    //     await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
+    //     // register a Manufacturer
+    //     await ManufacturerInstance.register({from: accounts[6]});
+    //     // set product from Manufacturer owner account
+    //     await ManufacturerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
+    //     // get 100 tokens
+    //     await PCTokenInstance.getCredit({from: accounts[7], value: oneEth});
+    //     // register a Wholesaler
+    //     await WholesalerInstance.register({from: accounts[7]});
+    //     // set product from Wholesaler owner account
+    //     await WholesalerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
+    //     // get 100 tokens
+    //     await PCTokenInstance.getCredit({from: accounts[8], value: oneEth});
+    //     // register a Retailer
+    //     await RetailerInstance.register({from: accounts[8]});
+    //     // set product from Retailer owner account
+    //     await RetailerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
+    //     // add Product from Manufacturer 1
+    //     await ProductInstance.addProduct(1, {from: accounts[6]});
+    //     // add Wholesaler from Manufacturer 1
+    //     await ProductInstance.addWholesaler(1, 1, {from: accounts[6]});
+    //     // product received by Wholesaler 1
+    //     await ProductInstance.receivedByWholesaler(1, true, {from: accounts[7]});
+    //     // add Retailer from Wholesaler 1
+    //     await ProductInstance.addRetailer(1, 1, {from: accounts[7]});
+    //     // product received by Retailer 1
+    //     await ProductInstance.receivedByRetailer(1, 10, true, {from: accounts[8]});
+    //     // Account 9 purchase the product by cash
+    //     await ProductInstance.purchasedByCustomer(1, accounts[9], {from: accounts[8]});
+        
+    //     // get 10 tokens
+    //     await PCTokenInstance.getCredit({from: accounts[9], value: oneEth/10});
+    //     // Account 9 reports counterfeit
+    //     await ProductInstance.reportCounterfeit(1, {from: accounts[9]});
+    //     let product = await ProductInstance.checkProduct(1, {from: accounts[9]});
+    //     // test that the Product is of Counterfeit status
+    //     assert.equal(product.status, Product.Status.Counterfeit, "Product is not successfully reported counterfeit");
+    //     //check balance
+    //     assert.equal(await PCTokenInstance.checkCredit({from: accounts[9]}), 5, "Balance is not changed correctly");
+    // });
+
+    it("Report Stolen by Manufacturer", async () => {
         // get 100 tokens
         await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
         // register a Manufacturer
@@ -512,7 +773,7 @@ contract("Product", function (accounts) {
         assert.equal(product.status, Product.Status.Stolen, "Product is not successfully reported stolen");
     });
 
-    it("Report Stolen by Manufacturer", async () => {
+    it("Report Stolen by Wholesaler", async () => {
         // get 100 tokens
         await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
         // register a Manufacturer
@@ -611,6 +872,37 @@ contract("Product", function (accounts) {
         assert.equal(product.status, Product.Status.Stolen, "Product is not successfully reported stolen");
     });
 
-    // it("Add Wholesaler at Invalid Status", async() => {
-    // });
+    it("Malicious user cannot Report Stolen", async () => {
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
+        // register a Manufacturer
+        await ManufacturerInstance.register({from: accounts[6]});
+        // set product from Manufacturer owner account
+        await ManufacturerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[7], value: oneEth});
+        // register a Wholesaler
+        await WholesalerInstance.register({from: accounts[7]});
+        // set product from Wholesaler owner account
+        await WholesalerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
+        // get 100 tokens
+        await PCTokenInstance.getCredit({from: accounts[8], value: oneEth});
+        // register a Retailer
+        await RetailerInstance.register({from: accounts[8]});
+        // add Product from Manufacturer 1
+        await ProductInstance.addProduct(1, {from: accounts[6]});
+        // add Wholesaler from Manufacturer 1
+        await ProductInstance.addWholesaler(1, 1, {from: accounts[6]});
+        // product received by Wholesaler 1
+        await ProductInstance.receivedByWholesaler(1, true, {from: accounts[7]});
+        // add Retailer from Wholesaler 1
+        await ProductInstance.addRetailer(1, 1, {from: accounts[7]});
+        // product received by Retailer 1
+        await ProductInstance.receivedByRetailer(1, 10, true, {from: accounts[8]});
+        // Account 9 purchase the product by cash
+        await ProductInstance.purchasedByCustomer(1, accounts[9], {from: accounts[8]});
+        
+        // Account 1 reports stolen
+        await truffleAssert.reverts(ProductInstance.reportStolen(1, {from: accounts[1]}), "The report is invalid");
+    });
 });
