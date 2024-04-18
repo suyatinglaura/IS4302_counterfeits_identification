@@ -93,7 +93,7 @@ contract Retailer is User {
         
         // refund the retailer
         if (totalReport[retailerId]>0) {
-            productTokenContract.transferCreditFrom(address(this), msg.sender, commitmentFee*totalReport[retailerId]/posReport[retailerId]);
+            productTokenContract.transferCreditFrom(address(this), msg.sender, commitmentFee*posReport[retailerId]/totalReport[retailerId]);
         } else {
             productTokenContract.transferCreditFrom(address(this), msg.sender, commitmentFee);
         }

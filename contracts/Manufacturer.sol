@@ -103,7 +103,7 @@ contract Manufacturer is User {
         
         // refund the manufacturer
         if (totalReport[manufacturerId]>0) {
-            productTokenContract.transferCreditFrom(address(this), msg.sender, commitmentFee*totalReport[manufacturerId]/posReport[manufacturerId]);
+            productTokenContract.transferCreditFrom(address(this), msg.sender, commitmentFee*posReport[manufacturerId]/totalReport[manufacturerId]);
         } else {
             productTokenContract.transferCreditFrom(address(this), msg.sender, commitmentFee);
         }

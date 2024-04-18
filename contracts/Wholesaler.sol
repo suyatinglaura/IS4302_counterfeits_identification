@@ -103,7 +103,7 @@ contract Wholesaler is User {
         
         // refund the wholesaler
         if (totalReport[wholesalerId]>0) {
-            productTokenContract.transferCreditFrom(address(this), msg.sender, commitmentFee*totalReport[wholesalerId]/posReport[wholesalerId]);
+            productTokenContract.transferCreditFrom(address(this), msg.sender, commitmentFee*posReport[wholesalerId]/totalReport[wholesalerId]);
         } else {
             productTokenContract.transferCreditFrom(address(this), msg.sender, commitmentFee);
         }
