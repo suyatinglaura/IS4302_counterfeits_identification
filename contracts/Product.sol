@@ -80,12 +80,6 @@ contract Product is ProductInterface {
         require(products[productId].status == expectedStatus, "You are not supposed to perform this operation at the current stage");
         _;
     }
-    
-    // // checkOwner
-    // modifier ownerOnly(uint256 productId) {
-    //     require(products[productId].customer == msg.sender);
-    //     _;
-    // }
 
     // check product id is valid
      modifier validProductId(uint256 productId) {
@@ -141,23 +135,24 @@ contract Product is ProductInterface {
     }
 
     // customer purchase by cash (run by retailer)
-    function purchasedByCustomer(uint productId, address customer) public validProductId(productId) isRetailer(msg.sender) validStatus(productId, Status.Retailed) {
+    function purchasedByCustomer(uint256 productId, address customer) public validProductId(productId) isRetailer(msg.sender) validStatus(productId, Status.Retailed) {
         require(retailerContract.checkId(products[productId].retailerId) == msg.sender, "You are not the retailer of this product");
         products[productId].status = Status.Sold; // update product status
         products[productId].customer = customer; // add customer
     }
 
     // customer purchase by token (run by customer)
-    function purchasedByToken(uint productId) public validProductId(productId) validStatus(productId, Status.Retailed) {
+    function purchasedByToken(uint256 productId, bool pos) public validProductId(productId) validStatus(productId, Status.Retailed) {
         // deduct the token amount from the customer's account
         productTokenContract.transferCredit(retailerContract.checkId(products[productId].retailerId), products[productId].price);
+        retailerContract.reportAuthenticity(products[productId].retailerId, pos); // customer reports whether the retailer is authentic
         // update the status of the purchased product to "Sold"
         products[productId].status = Status.Sold;
         products[productId].customer = msg.sender;
     }
     
     // report stolen case (run by all users)
-    function reportStolen(uint productId) public validProductId(productId) {
+    function reportStolen(uint256 productId) public validProductId(productId) {
         productObj memory product = products[productId];
         bool validReport = false;
         if ((product.status == Status.Manufactured)&&(manufacturerContract.checkId(product.manufacturerId) == msg.sender)) {
@@ -174,11 +169,11 @@ contract Product is ProductInterface {
     }
     
     // report counterfeit (run by customer)
-    function reportCounterfeit(uint productId) public validProductId(productId) validStatus(productId, Status.Sold) {
-        require(products[productId].customer == msg.sender, "You are not the owner of this product");
-        // owner of the prduct needs to transfer some deposit to report a counterfeit case
-        productTokenContract.transferCredit(address(this), products[productId].price/2);
-        retailerContract.reportAuthenticity(products[productId].retailerId, false); // customer sends a nagative report to the retailer
-        products[productId].status = Status.Counterfeit; // update product status
-    }
+    // function reportCounterfeit(uint256 productId) public validProductId(productId) validStatus(productId, Status.Sold) {
+    //     require(products[productId].customer == msg.sender, "You are not the owner of this product");
+    //     // owner of the prduct needs to transfer some deposit to report a counterfeit case
+    //     productTokenContract.transferCredit(address(this), products[productId].price/2);
+    //     retailerContract.reportAuthenticity(products[productId].retailerId, false); // customer sends a nagative report to the retailer
+    //     products[productId].status = Status.Counterfeit; // update product status
+    // }
 }
