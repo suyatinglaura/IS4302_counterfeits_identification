@@ -8,7 +8,7 @@ import "./ProductInterface.sol";
 
 // Product contract serves as a product pool, where it stores the product information, and operations related to products
 contract Product is ProductInterface {
-    enum Status {Manufactured, Wholesaled, Retailed, Sold, Stolen, Counterfeit} // possible status of a product
+    enum Status {Manufactured, Wholesaled, Retailed, Sold, Stolen} // possible status of a product
     
     Manufacturer manufacturerContract;
     Wholesaler wholesalerContract;
@@ -167,13 +167,4 @@ contract Product is ProductInterface {
         require(validReport, "The report is invalid");
         products[productId].status = Status.Stolen; // update product status
     }
-    
-    // report counterfeit (run by customer)
-    // function reportCounterfeit(uint256 productId) public validProductId(productId) validStatus(productId, Status.Sold) {
-    //     require(products[productId].customer == msg.sender, "You are not the owner of this product");
-    //     // owner of the prduct needs to transfer some deposit to report a counterfeit case
-    //     productTokenContract.transferCredit(address(this), products[productId].price/2);
-    //     retailerContract.reportAuthenticity(products[productId].retailerId, false); // customer sends a nagative report to the retailer
-    //     products[productId].status = Status.Counterfeit; // update product status
-    // }
 }

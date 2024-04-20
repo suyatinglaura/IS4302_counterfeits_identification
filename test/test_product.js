@@ -705,49 +705,6 @@ contract("Product - Safeguarding Product Integrity", function (accounts) {
 
     console.log("Testing Safeguarding Product Integrity");
 
-    // it("Report Counterfeit", async () => {
-    //     // get 100 tokens
-    //     await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
-    //     // register a Manufacturer
-    //     await ManufacturerInstance.register({from: accounts[6]});
-    //     // set product from Manufacturer owner account
-    //     await ManufacturerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
-    //     // get 100 tokens
-    //     await PCTokenInstance.getCredit({from: accounts[7], value: oneEth});
-    //     // register a Wholesaler
-    //     await WholesalerInstance.register({from: accounts[7]});
-    //     // set product from Wholesaler owner account
-    //     await WholesalerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
-    //     // get 100 tokens
-    //     await PCTokenInstance.getCredit({from: accounts[8], value: oneEth});
-    //     // register a Retailer
-    //     await RetailerInstance.register({from: accounts[8]});
-    //     // set product from Retailer owner account
-    //     await RetailerInstance.setProduct(ProductInstance.address, {from: accounts[0]});
-    //     // add Product from Manufacturer 1
-    //     await ProductInstance.addProduct(1, {from: accounts[6]});
-    //     // add Wholesaler from Manufacturer 1
-    //     await ProductInstance.addWholesaler(1, 1, {from: accounts[6]});
-    //     // product received by Wholesaler 1
-    //     await ProductInstance.receivedByWholesaler(1, true, {from: accounts[7]});
-    //     // add Retailer from Wholesaler 1
-    //     await ProductInstance.addRetailer(1, 1, {from: accounts[7]});
-    //     // product received by Retailer 1
-    //     await ProductInstance.receivedByRetailer(1, 10, true, {from: accounts[8]});
-    //     // Account 9 purchase the product by cash
-    //     await ProductInstance.purchasedByCustomer(1, accounts[9], {from: accounts[8]});
-        
-    //     // get 10 tokens
-    //     await PCTokenInstance.getCredit({from: accounts[9], value: oneEth/10});
-    //     // Account 9 reports counterfeit
-    //     await ProductInstance.reportCounterfeit(1, {from: accounts[9]});
-    //     let product = await ProductInstance.checkProduct(1, {from: accounts[9]});
-    //     // test that the Product is of Counterfeit status
-    //     assert.equal(product.status, Product.Status.Counterfeit, "Product is not successfully reported counterfeit");
-    //     //check balance
-    //     assert.equal(await PCTokenInstance.checkCredit({from: accounts[9]}), 5, "Balance is not changed correctly");
-    // });
-
     it("Report Stolen by Manufacturer", async () => {
         // get 100 tokens
         await PCTokenInstance.getCredit({from: accounts[6], value: oneEth});
