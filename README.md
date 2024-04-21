@@ -11,7 +11,7 @@ Counterfeit products pose a significant threat to the global economy and consume
 
 # System Architecture
 Our system architecture is built around a set of smart contracts written in Solidity. These contracts include PCToken, which facilitates economic incentives throughout the supply chain, as well as Manufacturer, Wholesaler, Retailer, and Product contracts that manage the different stages and participants involved in the supply chain process.
-codes can be found in :[contracts](IS4302_counterfeits_identification/contracts/)
+codes can be found in :[contracts](/contracts/)
 
 # Features and Justification
 1. PCToken: our native token, conforms to the ERC20 token standard, which serves as a medium of exchange and incentivizes responsible behavior among stakeholders throughout our supply chain ecosystem. The token's pricing mechanism is set at 1 PCT = 0.01 Ether.
@@ -21,5 +21,5 @@ codes can be found in :[contracts](IS4302_counterfeits_identification/contracts/
 
 # Testing and Validation
 We have implemented comprehensive test cases to validate the functionality of our system, ensuring robustness and reliability.
-codes can be found in : [test](IS4302_counterfeits_identification/test/)
+codes can be found in : [test](/test/)
 
